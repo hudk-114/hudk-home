@@ -99,7 +99,7 @@ SWR 发布默认关闭，避免凭证尚未配置时阻断 GHCR 发布。在 Git
 - `SWR_USERNAME`：SWR 登录指令中 `-u` 后的用户名。
 - `SWR_PASSWORD`：SWR 登录指令中 `-p` 后的密码。
 
-再创建 Actions Variable `SWR_ENABLED=true`，从 Actions 页面手动运行 `Intent Router` 工作流。工作流会关闭 SWR 基础版不支持的 OCI provenance 元数据，发布 `amd64`、`aarch64` 两个架构标签，再按照 SWR 基础版要求显式标注 `amd64`、`arm64` 架构，生成兼容的 Docker manifest list 作为版本号和 `latest` 标签。
+再创建 Actions Variable `SWR_ENABLED=true`，从 Actions 页面手动运行 `Intent Router` 工作流。工作流会关闭 SWR 基础版不支持的 OCI provenance 元数据，并强制使用 Docker media types 发布 `amd64`、`aarch64` 两个架构标签；随后按照 SWR 基础版要求显式标注 `amd64`、`arm64` 架构，生成兼容的 Docker manifest list 作为版本号和 `latest` 标签。
 
 SWR 登录指令、AK/SK 和密码不得写入 Git、App 配置或工作流文件。首次发布后在 SWR“我的镜像”中将 `intent-router` 设置为公开，并从未登录客户端验证匿名拉取。只有匿名拉取和双架构检查均通过后，才把 App `config.yaml` 的 `image` 从 GHCR 切换到 SWR 并提升版本号。
 
