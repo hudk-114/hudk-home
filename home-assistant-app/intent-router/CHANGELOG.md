@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- 允许来自 Supervisor 固定内部地址且已认证的 HA Ingress 请求直接使用测试台。
+- 外部端口与 OpenClaw API 继续强制校验共享 Bearer 密钥。
+- 修正 Supervisor WebSocket 代理地址，使 HA 标签和实体能力可以正常同步。
+
 ## 0.1.1
 
 - 将 Home Assistant App 的默认运行镜像切换到华为云 SWR 国内公开仓库。

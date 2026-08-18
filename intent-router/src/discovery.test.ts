@@ -347,4 +347,37 @@ describe("Home Assistant discovery", () => {
     });
     expect(JSON.stringify(catalog.publicDescription())).toContain("客厅石头扫地机");
   });
+
+  it("通过 Supervisor 的专用 WebSocket 代理路径发现能力", async () => {
+    let socketUrl = "";
+    const mockedFetch = vi.fn<typeof fetch>(async (input) => {
+      const body = String(input).endsWith("/api/states") ? [] : [];
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    const socketFactory: WebSocketFactory = (url) => {
+      socketUrl = url;
+      return {
+        addEventListener() {},
+        send() {},
+        close() {},
+      } as ReturnType<WebSocketFactory>;
+    };
+    const discovery = new HomeAssistantDiscovery(
+      { ...config, request_timeout_ms: 1 },
+      {
+        base_url: "http://supervisor/core",
+        token: "supervisor-token",
+        request_timeout_ms: 1,
+      },
+      new CapabilityCatalog(baseCatalog),
+      mockedFetch,
+      socketFactory,
+    );
+
+    await discovery.sync();
+    expect(socketUrl).toBe("ws://supervisor/core/websocket");
+  });
 });

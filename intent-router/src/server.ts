@@ -53,12 +53,30 @@ function secureEqual(left: string, right: string): boolean {
 }
 
 function authorized(request: IncomingMessage, secret: string): boolean {
+  if (trustedHomeAssistantIngress(request)) return true;
   if (!secret) return true;
   const authorization = request.headers.authorization ?? "";
   const prefix = "Bearer ";
   return (
     authorization.startsWith(prefix) &&
     secureEqual(authorization.slice(prefix.length), secret)
+  );
+}
+
+/**
+ * Home Assistant Supervisor authenticates Ingress sessions before proxying the
+ * request. Only trust its documented internal source address; the public app
+ * port must not be bypassable by spoofing X-Remote-User-Id from the LAN.
+ */
+function trustedHomeAssistantIngress(request: IncomingMessage): boolean {
+  const remoteAddress = request.socket.remoteAddress ?? "";
+  const fromSupervisor =
+    remoteAddress === "172.30.32.2" || remoteAddress === "::ffff:172.30.32.2";
+  const remoteUserId = request.headers["x-remote-user-id"];
+  return (
+    fromSupervisor &&
+    typeof remoteUserId === "string" &&
+    remoteUserId.trim().length > 0
   );
 }
 

@@ -67,7 +67,9 @@ pnpm dev
 
 长期部署优先安装仓库中的 `home-assistant-app/intent-router`。Node.js 服务运行在 HAOS 的独立 App 容器中，不进入 HA Core 进程；Supervisor 负责开机启动、健康检查、更新和备份 App 配置。
 
-App 设置 `homeassistant_api: true`，运行时通过 `SUPERVISOR_TOKEN` 调用 `http://supervisor/core`，不需要创建 HA 长期访问令牌。MiniMax Key、OpenClaw 共享密钥和执行开关从 `/data/options.json` 读取，由 HA App 配置页维护，不写入镜像或 Git。
+App 设置 `homeassistant_api: true`，运行时通过 `SUPERVISOR_TOKEN` 调用 `http://supervisor/core`，不需要创建 HA 长期访问令牌。REST API 使用 `/core/api` 代理，WebSocket 使用 `/core/websocket` 代理。MiniMax Key、OpenClaw 共享密钥和执行开关从 `/data/options.json` 读取，由 HA App 配置页维护，不写入镜像或 Git。
+
+从 HA Ingress 打开测试台时，Supervisor 已经完成用户认证；Router 只接受来自 Supervisor 固定内部地址 `172.30.32.2` 且带认证用户头的免密请求。通过 8787 端口访问时仍必须填写 App 配置中的 `shared_secret`，Ingress 身份头不能从局域网伪造绕过。
 
 开发仍然使用前面的 `pnpm dev`。不运行 HAOS 的 Linux 环境可继续参考 `deploy/systemd/hudk-intent-router.service.example`，但它是兼容部署方式，不是当前家庭的首选生产拓扑。
 

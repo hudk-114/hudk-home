@@ -15,8 +15,10 @@ async function invoke(
   handler: ReturnType<typeof createIntentRouterHandler>,
   options: {
     authorization?: string;
+    headers?: Record<string, string>;
     method?: string;
     path?: string;
+    remoteAddress?: string;
   } = {},
 ): Promise<CapturedResponse> {
   const body = JSON.stringify({
@@ -32,10 +34,11 @@ async function invoke(
     headers: {
       "content-type": "application/json",
       ...(options.authorization ? { authorization: options.authorization } : {}),
+      ...options.headers,
     },
   });
   Object.defineProperty(request, "socket", {
-    value: { remoteAddress: "127.0.0.1" },
+    value: { remoteAddress: options.remoteAddress ?? "127.0.0.1" },
   });
 
   const captured: CapturedResponse = { status: 0, headers: {}, body: null };
@@ -94,6 +97,35 @@ describe("Intent Router HTTP API", () => {
         risk: "routine",
       },
     });
+  });
+
+  it("接受 Supervisor 已认证的 Ingress 请求但拒绝外部伪造头", async () => {
+    const bundle = await loadRouterBundle(
+      new URL("../../config/intent-router.example.yaml", import.meta.url).pathname,
+      { INTENT_ROUTER_SHARED_SECRET: "test-secret" },
+    );
+    const pipeline = await buildPipeline(bundle);
+    const handler = createIntentRouterHandler(bundle, pipeline);
+    const ingressHeaders = {
+      "x-remote-user-id": "ha-user-id",
+      "x-ingress-path": "/api/hassio_ingress/session-id",
+    };
+
+    const ingress = await invoke(handler, {
+      method: "GET",
+      path: "/v1/catalog",
+      headers: ingressHeaders,
+      remoteAddress: "172.30.32.2",
+    });
+    expect(ingress.status).toBe(200);
+
+    const spoofed = await invoke(handler, {
+      method: "GET",
+      path: "/v1/catalog",
+      headers: ingressHeaders,
+      remoteAddress: "192.168.1.20",
+    });
+    expect(spoofed.status).toBe(401);
   });
 
   it("提供无需 HA 的测试页面和脱敏逻辑能力目录", async () => {

@@ -473,7 +473,10 @@ export class HomeAssistantDiscovery implements DiscoveryService {
   }> {
     const httpUrl = new URL(this.homeAssistant.base_url);
     httpUrl.protocol = httpUrl.protocol === "https:" ? "wss:" : "ws:";
-    httpUrl.pathname = `${httpUrl.pathname.replace(/\/$/, "")}/api/websocket`;
+    const basePath = httpUrl.pathname.replace(/\/$/, "");
+    httpUrl.pathname = basePath.endsWith("/core")
+      ? `${basePath}/websocket`
+      : `${basePath}/api/websocket`;
     httpUrl.search = "";
     httpUrl.hash = "";
 

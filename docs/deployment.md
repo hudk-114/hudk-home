@@ -84,7 +84,7 @@ OpenClaw / HA 页面 → Intent Router App:8787 → Supervisor → HA Core
 6. 启动 App，打开 Web UI，确认健康状态和 HA 自动发现正常。
 7. 完成 dry-run 后打开 `allow_live_execution`；默认调试仍保持开启，真实请求还必须显式发送 `dry_run: false`。
 
-App 通过 Supervisor 注入的 Token 和内部地址访问 HA，不创建 HA 长期访问令牌。MiniMax Key、共享密钥和开关保存在 HA App 配置中并随 HA 备份；公开 Git 仓库只维护源码、脱敏示例和能力模板。
+App 通过 Supervisor 注入的 Token 和内部地址访问 HA，不创建 HA 长期访问令牌。Ingress 页面由 Supervisor 认证，可以直接使用测试台；OpenClaw 或其他客户端通过 8787 端口访问时仍需携带 App 配置中的共享 Bearer 密钥。MiniMax Key、共享密钥和开关保存在 HA App 配置中并随 HA 备份；公开 Git 仓库只维护源码、脱敏示例和能力模板。
 
 ### 中国大陆 SWR 镜像
 
