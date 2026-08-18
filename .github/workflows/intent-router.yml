@@ -156,6 +156,8 @@ jobs:
           file: intent-router/Dockerfile
           platforms: ${{ matrix.platform }}
           push: true
+          provenance: false
+          sbom: false
           build-args: |
             BUILD_VERSION=${{ steps.app.outputs.version }}
             BUILD_ARCH=${{ matrix.ha_arch }}
@@ -183,13 +185,16 @@ jobs:
         name: Read App version
         run: |
           echo "version=$(sed -n 's/^version: \"\([^\"]*\)\"/\1/p' home-assistant-app/intent-router/config.yaml)" >> "$GITHUB_OUTPUT"
-      - name: Publish version and latest manifests
+      - name: Publish version and latest Docker manifest lists
         env:
           VERSION: ${{ steps.app.outputs.version }}
           IMAGE: swr.cn-east-3.myhuaweicloud.com/hudk-home/intent-router
         run: |
-          docker buildx imagetools create \
-            --tag "${IMAGE}:${VERSION}" \
-            --tag "${IMAGE}:latest" \
+          docker manifest create "${IMAGE}:${VERSION}" \
             "${IMAGE}:amd64-${VERSION}" \
             "${IMAGE}:aarch64-${VERSION}"
+          docker manifest push "${IMAGE}:${VERSION}"
+          docker manifest create "${IMAGE}:latest" \
+            "${IMAGE}:amd64-${VERSION}" \
+            "${IMAGE}:aarch64-${VERSION}"
+          docker manifest push "${IMAGE}:latest"
