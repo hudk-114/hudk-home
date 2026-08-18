@@ -1,0 +1,36 @@
+# Copy to /config/packages/hudk_home.yaml after reviewing entity IDs.
+# Requires `homeassistant: packages: !include_dir_named packages`.
+
+script:
+  hudk_vacuum_start:
+    alias: 开始扫地
+    description: 稳定能力：启动主扫地机器人清扫
+    icon: mdi:robot-vacuum
+    mode: single
+    sequence:
+      - action: vacuum.start
+        target:
+          entity_id: vacuum.REPLACE_WITH_VACUUM_ENTITY_ID
+
+  hudk_vacuum_dock:
+    alias: 扫地机回充
+    description: 稳定能力：让主扫地机器人返回充电座
+    icon: mdi:home-battery
+    mode: single
+    sequence:
+      - action: vacuum.return_to_base
+        target:
+          entity_id: vacuum.REPLACE_WITH_VACUUM_ENTITY_ID
+
+intent_script:
+  HudkVacuumStart:
+    action:
+      - action: script.hudk_vacuum_start
+    speech:
+      text: 已让扫地机器人开始清扫
+
+  HudkVacuumDock:
+    action:
+      - action: script.hudk_vacuum_dock
+    speech:
+      text: 已让扫地机器人返回充电座

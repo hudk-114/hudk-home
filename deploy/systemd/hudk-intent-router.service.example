@@ -1,0 +1,22 @@
+[Unit]
+Description=HUDK Home Intent Router
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hudk-home
+Group=hudk-home
+WorkingDirectory=/opt/hudk-home/intent-router
+EnvironmentFile=/etc/hudk-home/intent-router.env
+ExecStart=/usr/bin/pnpm start
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/tmp
+
+[Install]
+WantedBy=multi-user.target

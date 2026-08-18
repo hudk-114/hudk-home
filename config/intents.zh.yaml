@@ -1,0 +1,60 @@
+version: 1
+
+normalization:
+  fillers:
+    - 请帮我
+    - 麻烦
+
+rules:
+  - id: reject_device_admin
+    resolver: local_rules
+    action: reject
+    patterns:
+      - "^(删除|移除|重置)(所有|全部)?设备$"
+    message: 设备管理操作不能通过自然语言执行。
+    error_code: ADMIN_OPERATION_REJECTED
+
+  - id: reject_unknown_door
+    resolver: local_rules
+    action: reject
+    patterns:
+      - "^(打开|开启)(大门|门锁|车库门)$"
+    message: 当前能力目录没有允许的门或门锁控制能力。
+    error_code: CAPABILITY_NOT_ALLOWED
+
+  - id: vacuum_start
+    resolver: local_rules
+    patterns:
+      - "^(让)?(主)?(扫地机器人|扫地机)?(开始|启动|去)?(扫地|清扫|打扫|干活)(一下)?$"
+    intent: vacuum.start
+    target: main_vacuum
+    confidence: 1
+
+  - id: vacuum_dock
+    resolver: local_rules
+    patterns:
+      - "^(让)?(主)?(扫地机器人|扫地机)(回充|回家|回去充电|返回充电座)$"
+      - "^(不扫了|停止清扫)(让)?(主)?(扫地机器人|扫地机)(回充|回家|回去充电)?$"
+    intent: vacuum.dock
+    target: main_vacuum
+    confidence: 1
+
+  - id: system_health
+    resolver: local_rules
+    patterns:
+      - "^(家里|家庭|系统|设备)(现在)?(都)?(正常|健康|在线)吗$"
+      - "^(检查|查看)(家庭|系统|设备)(健康|状态)$"
+    intent: system.health
+    target: home
+    confidence: 1
+
+  - id: contextual_vacuum_dock
+    resolver: conversation_context
+    patterns:
+      - "^(别扫了)?(让)?它(回去|回家|回充|回去充电)$"
+    intent: vacuum.dock
+    target: $context.last_target
+    allowed_context_targets:
+      - main_vacuum
+    clarification: 你希望哪台设备回去？
+    confidence: 1

@@ -1,0 +1,47 @@
+name: HUDK Home Intent Router
+version: "0.1.0"
+slug: hudk_intent_router
+description: 受限、可审计的家庭自然语言意图路由器
+url: https://github.com/hudk-114/hudk-home/tree/main/home-assistant-app/intent-router
+arch:
+  - amd64
+  - aarch64
+image: ghcr.io/hudk-114/hudk-home-intent-router
+startup: application
+boot: auto
+init: false
+stage: experimental
+homeassistant_api: true
+ingress: true
+ingress_port: 8787
+panel_icon: mdi:transit-connection-variant
+panel_title: Intent Router
+panel_admin: true
+webui: http://[HOST]:[PORT:8787]/
+watchdog: http://[HOST]:[PORT:8787]/healthz
+backup: hot
+timeout: 120
+ports:
+  "8787/tcp": 8787
+ports_description:
+  "8787/tcp": OpenClaw 和其他受认证文字入口
+options:
+  minimax_api_key: null
+  shared_secret: null
+  minimax_model: MiniMax-M3
+  minimax_thinking: disabled
+  minimax_timeout_ms: 30000
+  minimax_max_completion_tokens: 1024
+  discovery_enabled: true
+  default_dry_run: true
+  allow_live_execution: false
+schema:
+  minimax_api_key: password
+  shared_secret: password
+  minimax_model: str
+  minimax_thinking: list(disabled|adaptive)
+  minimax_timeout_ms: int(1000,120000)
+  minimax_max_completion_tokens: int(128,4096)
+  discovery_enabled: bool
+  default_dry_run: bool
+  allow_live_execution: bool

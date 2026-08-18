@@ -1,0 +1,10 @@
+# Reference only. Prefer configuring HomeKit Bridge from the HA UI.
+# Replace the sensor entity IDs before use.
+homekit:
+  - name: Hudk Home Bridge
+    filter:
+      include_entities:
+        - sensor.REPLACE_WITH_TEMPERATURE_ENTITY_ID
+        - sensor.REPLACE_WITH_HUMIDITY_ENTITY_ID
+        - script.hudk_vacuum_start
+        - script.hudk_vacuum_dock

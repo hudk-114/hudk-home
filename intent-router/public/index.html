@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Intent Router 测试台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+  <header>
+    <div><small>HUDK HOME</small><h1>Intent Router 测试台</h1><p>观察自然语言如何映射为受限家庭能力；调试默认开启，关闭后会真实调用 Home Assistant。</p></div>
+    <span id="health" class="pill">检查服务中…</span>
+  </header>
+
+  <section class="panel">
+    <form id="form">
+      <label for="text">自然语言</label>
+      <textarea id="text" maxlength="500" required autofocus>扫地机回充</textarea>
+      <div class="row">
+        <label>来源<select id="source"><option value="home_assistant">Home Assistant</option><option value="ios_shortcut">iOS 快捷指令</option><option value="openclaw">OpenClaw</option></select></label>
+        <label>Bearer 密钥（本机空配置可留空）<input id="secret" type="password" autocomplete="off"></label>
+      </div>
+      <div class="debug-control">
+        <label class="debug-toggle"><input id="debug" type="checkbox" checked><span>调试</span></label>
+        <span id="debug-help">已开启：只解析和模拟，不调用 Home Assistant。</span>
+      </div>
+      <div class="examples"><button type="button" data-text="开始扫地">开始扫地</button><button type="button" data-text="扫地机回充">扫地机回充</button><button type="button" data-text="卧室现在多少度">查询温度</button><button type="button" data-text="让它回去">歧义示例</button></div>
+      <button class="primary" type="submit">解析并模拟</button>
+    </form>
+  </section>
+
+  <section class="flow">
+    <article><span>01 · 输入</span><strong id="out-input">等待输入</strong></article><b>→</b>
+    <article><span>02 · Resolver</span><strong id="out-resolver">—</strong></article><b>→</b>
+    <article><span>03 · 标准意图</span><strong id="out-intent">—</strong></article><b>→</b>
+    <article><span>04 · Capability</span><strong id="out-capability">—</strong></article>
+  </section>
+
+  <section class="grid">
+    <article class="panel result">
+      <div class="heading"><h2>处理结果</h2><span id="out-status" class="pill">等待中</span></div>
+      <p id="out-message" class="message">提交一句话后，这里会显示识别和策略结果。</p>
+      <dl><div><dt>逻辑目标</dt><dd id="out-target">—</dd></div><div><dt>参数</dt><dd><code id="out-arguments">{}</code></dd></div><div><dt>风险等级</dt><dd id="out-risk">—</dd></div><div><dt>执行模式</dt><dd id="out-mode">调试</dd></div></dl>
+    </article>
+    <article class="panel catalog"><div class="heading"><h2>当前逻辑能力</h2><button id="sync" type="button">同步 HA</button></div><p id="discovery">正在读取自动发现状态…</p><p>静态配置与 HA 自动发现合并展示，不包含 HA service 或 entity ID。</p><ul id="catalog"><li>正在加载…</li></ul></article>
+  </section>
+  <details class="panel raw" open><summary>调用 LLM 的原始 JSON 入参</summary><p class="raw-note">展示实际请求体，不包含 API Key、Authorization 或其他请求头。</p><pre id="llm-request">尚未发起请求</pre></details>
+  <details class="panel raw"><summary>查看原始 JSON 响应</summary><pre id="raw">{}</pre></details>
+</main>
+<script src="app.js" defer></script>
+</body>
+</html>

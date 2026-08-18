@@ -1,0 +1,37 @@
+# Secrets and local overrides
+.env
+.env.*
+!.env.example
+secrets.yaml
+*.token
+*.pem
+*.key
+*.p12
+
+# Home Assistant runtime state
+.storage/
+*.db
+*.db-shm
+*.db-wal
+*.log
+backups/
+ssl/
+deps/
+tts/
+
+# Python / Node / editors
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+.idea/
+.vscode/
+.DS_Store
+
+# Local generated configuration
+config/*.local.yaml
+home-assistant/**/*.local.yaml
+docs/*.local.md

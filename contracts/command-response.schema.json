@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hudk-home.local/contracts/command-response.schema.json",
+  "title": "Hudk Home command response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "status",
+    "message",
+    "intent",
+    "target",
+    "resolver",
+    "ha_context_id",
+    "confirmation_id",
+    "error_code",
+    "dry_run",
+    "data",
+    "llm_request"
+  ],
+  "properties": {
+    "request_id": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "completed", "needs_clarification", "needs_confirmation", "rejected", "failed"]
+    },
+    "message": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "intent": { "type": ["string", "null"] },
+    "target": { "type": ["string", "null"] },
+    "resolver": { "type": ["string", "null"] },
+    "ha_context_id": { "type": ["string", "null"] },
+    "confirmation_id": { "type": ["string", "null"] },
+    "error_code": { "type": ["string", "null"] },
+    "dry_run": { "type": "boolean" },
+    "data": { "type": ["object", "null"] },
+    "llm_request": { "type": ["object", "null"] }
+  }
+}

@@ -1,0 +1,45 @@
+version: 1
+cases:
+  - text: 开始扫地
+    expected_intent: vacuum.start
+    expected_target: main_vacuum
+
+  - text: 让扫地机器人干活
+    expected_intent: vacuum.start
+    expected_target: main_vacuum
+
+  - text: 扫地机回充
+    expected_intent: vacuum.dock
+    expected_target: main_vacuum
+
+  - text: 别扫了让它回家
+    context:
+      last_target: main_vacuum
+    expected_intent: vacuum.dock
+    expected_target: main_vacuum
+
+  - text: 卧室现在多少度
+    expected_intent: sensor.read
+    expected_arguments:
+      metric: temperature
+
+  - text: 家里湿度怎么样
+    expected_intent: sensor.read
+    expected_arguments:
+      metric: humidity
+
+  - text: 家里现在正常吗
+    expected_intent: system.health
+    expected_target: home
+
+  - text: 让它回去
+    expected_status: needs_clarification
+    note: 没有上下文时不得猜设备
+
+  - text: 打开大门
+    expected_status: rejected
+    note: 能力目录当前没有门锁/门能力
+
+  - text: 删除所有设备
+    expected_status: rejected
+    note: 管理操作永不通过自然语言执行

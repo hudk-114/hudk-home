@@ -1,0 +1,26 @@
+language: zh
+intents:
+  HudkVacuumStart:
+    data:
+      - sentences:
+          - "(开始|启动)[一下](扫地|清扫)"
+          - "让{vacuum_name}(开始|启动)[一下](扫地|清扫)"
+          - "{vacuum_name}(开始|启动)[一下](扫地|清扫)"
+          - "(打扫|清扫)[一下](家里|房间|地面)"
+
+  HudkVacuumDock:
+    data:
+      - sentences:
+          - "{vacuum_name}(回充|回去充电|返回充电座)"
+          - "让{vacuum_name}(回充|回去充电|返回充电座)"
+          - "(不扫了|停止清扫)[让它](回充|回家|回去充电)"
+
+lists:
+  vacuum_name:
+    values:
+      - in: "扫地机器人"
+        out: main_vacuum
+      - in: "扫地机"
+        out: main_vacuum
+      - in: "主扫地机"
+        out: main_vacuum

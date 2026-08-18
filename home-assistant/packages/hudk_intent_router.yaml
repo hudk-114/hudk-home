@@ -1,0 +1,76 @@
+# Intent Router 的 HA 侧入口。
+# 复制到 /config/packages/ 后，先配置 secrets.yaml，再执行 HA“检查配置”并重启。
+# 页面测试脚本固定 dry_run: true，不会要求 Router 执行真实设备动作。
+
+rest_command:
+  hudk_intent_turn:
+    url: !secret intent_router_turn_url
+    method: post
+    headers:
+      authorization: !secret intent_router_authorization
+      accept: "application/json"
+    content_type: "application/json; charset=utf-8"
+    timeout: 30
+    payload: >-
+      {
+        "text": {{ text | to_json }},
+        "language": "zh-CN",
+        "source": "home_assistant",
+        "actor": {{ actor | default("ha-dashboard") | to_json }},
+        "dry_run": {{ dry_run | default(true) | bool | to_json }}
+      }
+
+  hudk_intent_health:
+    url: !secret intent_router_health_url
+    method: get
+    headers:
+      authorization: !secret intent_router_authorization
+      accept: "application/json"
+    timeout: 5
+
+input_text:
+  hudk_intent_test_text:
+    name: 家庭意图测试文本
+    icon: mdi:message-text-outline
+    initial: 家里现在正常吗
+    max: 255
+
+script:
+  hudk_intent_router_test:
+    alias: 测试家庭意图（Dry Run）
+    description: 从 HA 页面调用 Intent Router，只解析和模拟，不执行真实设备动作
+    icon: mdi:flask-outline
+    mode: single
+    sequence:
+      - action: rest_command.hudk_intent_turn
+        data:
+          text: "{{ states('input_text.hudk_intent_test_text') }}"
+          actor: ha-dashboard-test
+          dry_run: true
+        response_variable: intent_router_response
+      - action: persistent_notification.create
+        data:
+          title: Intent Router 测试结果
+          message: >-
+            HTTP {{ intent_router_response.status }}：
+            {% if intent_router_response.content is mapping %}
+              {{ intent_router_response.content.message
+                 | default(intent_router_response.content | to_json) }}
+            {% else %}
+              {{ intent_router_response.content }}
+            {% endif %}
+
+  hudk_intent_router_health:
+    alias: 检查 Intent Router
+    description: 从 HA 检查 Intent Router 与其 HA 依赖状态
+    icon: mdi:heart-pulse
+    mode: single
+    sequence:
+      - action: rest_command.hudk_intent_health
+        response_variable: intent_router_health
+      - action: persistent_notification.create
+        data:
+          title: Intent Router 健康状态
+          message: >-
+            HTTP {{ intent_router_health.status }}：
+            {{ intent_router_health.content | to_json }}

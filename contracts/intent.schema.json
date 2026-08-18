@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hudk-home.local/contracts/intent.schema.json",
+  "title": "Hudk Home normalized intent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "intent", "target", "arguments", "confidence"],
+  "properties": {
+    "version": {
+      "const": "1.0"
+    },
+    "intent": {
+      "type": "string",
+      "enum": [
+        "sensor.read",
+        "vacuum.start",
+        "vacuum.dock",
+        "light.turn_on",
+        "light.turn_off",
+        "climate.set_temperature",
+        "scene.activate",
+        "system.health"
+      ]
+    },
+    "target": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{1,63}$"
+    },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "type": "string",
+          "enum": ["temperature", "humidity", "air_quality", "pm25", "co2", "tvoc"]
+        },
+        "temperature_c": {
+          "type": "number",
+          "minimum": 16,
+          "maximum": 30
+        },
+        "scene": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{1,63}$"
+        }
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "needs_confirmation": {
+      "type": "boolean",
+      "default": false
+    },
+    "clarification": {
+      "type": ["string", "null"],
+      "maxLength": 200
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["intent"],
+        "properties": {
+          "intent": { "const": "climate.set_temperature" }
+        }
+      },
+      "then": {
+        "properties": {
+          "arguments": {
+            "required": ["temperature_c"]
+          }
+        }
+      }
+    }
+  ]
+}

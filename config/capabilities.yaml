@@ -1,0 +1,67 @@
+version: 1
+
+# 本文件固定核心脚本、特殊策略与人工覆盖；普通同类设备实例由
+# intent-router.example.yaml 的 discovery.templates 从 HA 自动发现。
+
+# Logical targets are stable. Vendor entity IDs remain behind HA scripts.
+targets:
+  main_vacuum:
+    display_name: 主扫地机器人
+    aliases:
+      - 扫地机器人
+      - 扫地机
+    area: replace_locally
+
+  home:
+    display_name: 家庭系统
+    aliases:
+      - 家里
+      - 家庭
+    area: replace_locally
+
+capabilities:
+  vacuum.start:
+    target: main_vacuum
+    kind: write
+    risk: routine
+    allowed_sources: [home_assistant, ios_shortcut, openclaw]
+    ha_action: script.turn_on
+    ha_entity_id: script.hudk_vacuum_start
+    # 真实扫地机实体只写入被忽略的 config/capabilities.local.yaml。
+    verification_entity_id: vacuum.REPLACE_WITH_VACUUM_ENTITY_ID
+    confirmation: never
+    success_criteria: state_confirmed
+    accepted_message: 扫地机器人已收到清扫指令。
+    completed_message: 扫地机器人已开始清扫。
+    failure_message: 扫地任务未能启动
+    timeout_seconds: 15
+    completed_states: [cleaning]
+
+  vacuum.dock:
+    target: main_vacuum
+    kind: write
+    risk: routine
+    allowed_sources: [home_assistant, ios_shortcut, openclaw]
+    ha_action: script.turn_on
+    ha_entity_id: script.hudk_vacuum_dock
+    verification_entity_id: vacuum.REPLACE_WITH_VACUUM_ENTITY_ID
+    confirmation: never
+    success_criteria: state_confirmed
+    accepted_message: 扫地机器人正在返回充电座。
+    completed_message: 扫地机器人已回到充电座。
+    failure_message: 回充任务未能提交
+    timeout_seconds: 20
+    accepted_states: [returning]
+    completed_states: [docked, charging]
+
+  system.health:
+    target: home
+    kind: read
+    risk: read
+
+policies:
+  unknown_intent: reject
+  unknown_target: clarify
+  model_confidence_threshold: 0.80
+  never_allow_generated_ha_service: true
+  never_allow_generated_entity_id: true

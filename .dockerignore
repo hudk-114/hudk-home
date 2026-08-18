@@ -1,0 +1,11 @@
+.git
+.env
+**/.env
+**/node_modules
+**/dist
+**/coverage
+config/*.local.yaml
+docs/*.local.md
+*.db
+*.log
+backups

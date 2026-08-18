@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hudk-home.local/contracts/resolve-response.schema.json",
+  "title": "Hudk Home resolve response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request_id", "status", "message", "intent", "resolver", "error_code"],
+  "properties": {
+    "request_id": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["resolved", "needs_clarification", "rejected", "failed"]
+    },
+    "message": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "intent": { "type": ["object", "null"] },
+    "resolver": { "type": ["string", "null"] },
+    "error_code": { "type": ["string", "null"] },
+    "llm_request": { "type": ["object", "null"] }
+  }
+}

@@ -1,0 +1,265 @@
+server:
+  bind: ${INTENT_ROUTER_BIND:-127.0.0.1}
+  port: ${INTENT_ROUTER_PORT:-8787}
+  request_timeout_ms: 6000
+  audit_log: true
+  log_raw_text: false
+
+home_assistant:
+  base_url: ${HA_BASE_URL}
+  token: ${HA_TOKEN}
+  request_timeout_ms: 4000
+
+resolution:
+  order:
+    - catalog_aliases
+    - local_rules
+    - conversation_context
+    - llm
+  llm_confidence_threshold: 0.80
+  require_schema_validation: true
+  # dry_run 是未显式传参时的默认值；真实执行还需要单独打开许可。
+  dry_run: ${INTENT_ROUTER_DRY_RUN:-true}
+  allow_live_execution: ${INTENT_ROUTER_ALLOW_LIVE_EXECUTION:-false}
+
+provider:
+  active: ${INTENT_PROVIDER:-minimax}
+  adapters:
+    minimax:
+      protocol: openai_compatible
+      base_url: ${MINIMAX_BASE_URL:-https://api.minimaxi.com/v1}
+      api_key: ${MINIMAX_API_KEY}
+      model: ${MINIMAX_MODEL:-MiniMax-M3}
+      # 意图分类是受限选择题，不需要 M3 的长推理。
+      thinking: ${MINIMAX_THINKING:-disabled}
+      max_completion_tokens: ${MINIMAX_MAX_COMPLETION_TOKENS:-1024}
+      # M3 带推理的首次响应通常明显超过 4 秒。超时可按部署网络调整；
+      # 意图请求不自动重试，避免 Token Plan 重复计次。
+      timeout_ms: ${MINIMAX_TIMEOUT_MS:-30000}
+      retries: ${MINIMAX_RETRIES:-0}
+      failure_threshold: 3
+      cooldown_ms: 30000
+      tool_choice: auto
+
+execution:
+  active: home_assistant
+  adapters:
+    home_assistant:
+      protocol: home_assistant_rest
+
+# HA 是设备目录权威。selector 决定哪些实体允许进入通用 Router，安全模板
+# 决定它们具体能做什么；Assist 公开列表与文字入口互不绑定。
+discovery:
+  enabled: ${HA_DISCOVERY_ENABLED:-true}
+  sync_interval_seconds: 300
+  request_timeout_ms: 5000
+  selection_mode: any
+  selectors:
+    - id: router_label
+      protocol: ha_label
+      labels: [intent_router]
+    # 可选：若某个部署希望复用 Assist 的公开名单，可再添加：
+    # - id: assist_exposure
+    #   protocol: conversation_exposure
+  exclude_entity_categories: [config, diagnostic]
+  exclude_hidden: true
+  templates:
+    - id: vacuum.start
+      intent: vacuum.start
+      match:
+        domains: [vacuum]
+      kind: write
+      risk: routine
+      allowed_sources: [home_assistant, ios_shortcut, openclaw]
+      ha_action: vacuum.start
+      confirmation: never
+      success_criteria: state_confirmed
+      accepted_message: 扫地机器人已收到清扫指令。
+      completed_message: 扫地机器人已开始清扫。
+      failure_message: 扫地任务未能启动
+      timeout_seconds: 15
+      completed_states: [cleaning]
+
+    - id: vacuum.dock
+      intent: vacuum.dock
+      match:
+        domains: [vacuum]
+      kind: write
+      risk: routine
+      allowed_sources: [home_assistant, ios_shortcut, openclaw]
+      ha_action: vacuum.return_to_base
+      confirmation: never
+      success_criteria: state_confirmed
+      accepted_message: 扫地机器人正在返回充电座。
+      completed_message: 扫地机器人已回到充电座。
+      failure_message: 回充任务未能提交
+      timeout_seconds: 20
+      accepted_states: [returning]
+      completed_states: [docked, charging]
+
+    # 已在 HA 封装好的稳定脚本也可以只靠标签进入 Router。名称匹配只负责
+    # 选择已标记脚本，动作仍固定为 script.turn_on，模型不能提供脚本 ID。
+    - id: vacuum.start
+      intent: vacuum.start
+      match:
+        domains: [script]
+        name_patterns: ["^开始扫地$"]
+      kind: write
+      risk: routine
+      allowed_sources: [home_assistant, ios_shortcut, openclaw]
+      ha_action: script.turn_on
+      confirmation: never
+      success_criteria: ha_accepted
+      accepted_message: 已通知扫地机器人开始清扫。
+      failure_message: 扫地脚本未能启动
+
+    - id: vacuum.dock
+      intent: vacuum.dock
+      match:
+        domains: [script]
+        name_patterns: ["^(扫地机器人)?回充$"]
+      kind: write
+      risk: routine
+      allowed_sources: [home_assistant, ios_shortcut, openclaw]
+      ha_action: script.turn_on
+      confirmation: never
+      success_criteria: ha_accepted
+      accepted_message: 已通知扫地机器人返回充电座。
+      failure_message: 回充脚本未能启动
+
+    - id: sensor.read_temperature
+      intent: sensor.read
+      arguments: { metric: temperature }
+      match:
+        domains: [sensor]
+        device_classes: [temperature]
+      kind: read
+      risk: read
+      max_state_age_seconds: 900
+
+    - id: sensor.read_humidity
+      intent: sensor.read
+      arguments: { metric: humidity }
+      match:
+        domains: [sensor]
+        device_classes: [humidity]
+      kind: read
+      risk: read
+      max_state_age_seconds: 900
+
+    - id: sensor.read_pm25
+      intent: sensor.read
+      arguments: { metric: pm25 }
+      match:
+        domains: [sensor]
+        device_classes: [pm25]
+      kind: read
+      risk: read
+      max_state_age_seconds: 900
+
+    # 当前青萍/Xiaomi 实体没有标准 CO2 device_class，因此同时以单位和名称
+    # 识别；实体仍必须显式带 intent_router 标签。
+    - id: sensor.read_co2
+      intent: sensor.read
+      arguments: { metric: co2 }
+      match:
+        domains: [sensor]
+        units: [ppm]
+        name_patterns: ["CO2|二氧化碳"]
+      kind: read
+      risk: read
+      max_state_age_seconds: 900
+
+    - id: sensor.read_tvoc
+      intent: sensor.read
+      arguments: { metric: tvoc }
+      match:
+        domains: [sensor]
+        device_classes: [volatile_organic_compounds, volatile_organic_compounds_parts]
+      kind: read
+      risk: read
+      max_state_age_seconds: 900
+
+    - id: light.turn_on
+      intent: light.turn_on
+      match:
+        domains: [light]
+      kind: write
+      risk: routine
+      allowed_sources: [home_assistant, ios_shortcut, openclaw]
+      ha_action: light.turn_on
+      confirmation: never
+      success_criteria: state_confirmed
+      completed_message: 灯已打开。
+      failure_message: 灯光未能打开
+      timeout_seconds: 10
+      completed_states: [on]
+
+    - id: light.turn_off
+      intent: light.turn_off
+      match:
+        domains: [light]
+      kind: write
+      risk: routine
+      allowed_sources: [home_assistant, ios_shortcut, openclaw]
+      ha_action: light.turn_off
+      confirmation: never
+      success_criteria: state_confirmed
+      completed_message: 灯已关闭。
+      failure_message: 灯光未能关闭
+      timeout_seconds: 10
+      completed_states: [off]
+
+    - id: climate.set_temperature
+      intent: climate.set_temperature
+      match:
+        domains: [climate]
+      kind: write
+      risk: routine
+      allowed_sources: [home_assistant, ios_shortcut, openclaw]
+      ha_action: climate.set_temperature
+      argument_mapping: { temperature_c: temperature }
+      confirmation: never
+      success_criteria: ha_accepted
+      accepted_message: 空调温度设置已提交。
+      failure_message: 空调温度未能设置
+
+    - id: scene.activate
+      intent: scene.activate
+      match:
+        domains: [scene]
+      kind: write
+      risk: routine
+      allowed_sources: [home_assistant, ios_shortcut, openclaw]
+      ha_action: scene.turn_on
+      confirmation: never
+      success_criteria: ha_accepted
+      accepted_message: 场景启动指令已提交。
+      failure_message: 场景未能启动
+
+security:
+  shared_secret: ${INTENT_ROUTER_SHARED_SECRET}
+  allowed_sources:
+    - home_assistant
+    - ios_shortcut
+    - openclaw
+  confirmation_ttl_seconds: 60
+  rate_limit_per_minute: 30
+
+# 可选：加载实现 register(registry) 的本地 ESM 插件。
+# 路径相对于 files.root；配置文件本身应视为可信代码配置。
+plugins:
+  modules: []
+
+files:
+  root: ..
+  intent_schema: contracts/intent.schema.json
+  turn_request_schema: contracts/turn-request.schema.json
+  resolve_response_schema: contracts/resolve-response.schema.json
+  command_response_schema: contracts/command-response.schema.json
+  capabilities: config/capabilities.yaml
+  # 本地文件可只覆盖真实 entity_id；示例见 capabilities.override.example.yaml。
+  capability_overlays: []
+  local_rules: config/intents.zh.yaml
+  rule_overlays: []
+  utterance_tests: tests/utterances.yaml
