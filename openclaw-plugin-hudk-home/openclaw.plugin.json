@@ -1,0 +1,61 @@
+{
+  "id": "hudk-home",
+  "name": "HUDK Home",
+  "description": "把家庭自然语言请求交给受限的 HUDK Home Intent Router。",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "minLength": 1,
+        "default": "http://192.168.56.2:8787",
+        "description": "HUDK Home Intent Router base URL."
+      },
+      "sharedSecret": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Bearer secret configured in the Home Assistant App."
+      },
+      "defaultDryRun": {
+        "type": "boolean",
+        "default": false,
+        "description": "Parse only unless a tool call explicitly overrides it."
+      },
+      "timeoutMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 120000,
+        "default": 45000
+      }
+    },
+    "additionalProperties": false
+  },
+  "uiHints": {
+    "baseUrl": {
+      "label": "Intent Router 地址",
+      "help": "只填协议、主机和端口；插件固定调用 /v1/turn。",
+      "placeholder": "http://192.168.56.2:8787"
+    },
+    "sharedSecret": {
+      "label": "共享密钥",
+      "help": "填写 HA App 配置中的 shared_secret；不要使用 HA Token。",
+      "sensitive": true
+    },
+    "defaultDryRun": {
+      "label": "默认调试",
+      "help": "开启后只解析不执行。关闭后仍受 Intent Router 服务端总开关和能力白名单约束。"
+    },
+    "timeoutMs": {
+      "label": "请求超时（毫秒）"
+    }
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "hudk_home_turn"
+    ]
+  }
+}

@@ -101,7 +101,9 @@ HA App 部署不执行上述 Token 步骤：HA 地址和 Token 由 Supervisor �
 
 ## OpenClaw 调用
 
-OpenClaw 不需要理解 command、query 或 health 分类，只需把用户原文传给统一入口。例如让它的 HTTP 工具发送：
+OpenClaw 不需要理解 command、query 或 health 分类，只需把用户原文传给统一入口。推荐安装仓库内的 [`openclaw-plugin-hudk-home`](../openclaw-plugin-hudk-home/README.md)：它只注册 `hudk_home_turn`，固定调用 `/v1/turn`，不需要给家庭 agent 开放任意 HTTP、`exec`、HA service 或实体 ID。
+
+底层请求契约如下：
 
 ```http
 POST http://INTENT_ROUTER_HOST:8787/v1/turn
@@ -136,6 +138,8 @@ curl -sS http://127.0.0.1:8787/v1/turn \
 如果 OpenClaw 与 Router 不在同一台主机，应让 Router 处于受控局域网或反向代理后，设置非空共享密钥；配置校验会拒绝“非回环监听 + 空密钥”。不要直接暴露到公网。
 
 安装为 HA App 后使用 `http://HOME_ASSISTANT_IP:8787/v1/turn`。8787 只应开放在可信局域网或 VPN 中；OpenClaw 持有的只是独立共享密钥，不能获得 `SUPERVISOR_TOKEN`。
+
+为某个 OpenClaw agent 启用时，只把 `hudk_home_turn` 加入该 agent 的工具白名单，并在插件配置中填写 App 当前的 `shared_secret`。插件默认地址可配置为 `http://HOME_ASSISTANT_IP:8787`，不要附带 `/v1/turn`；共享密钥只保存在 OpenClaw 本机配置，不提交 Git。
 
 ## 从 HA 页面调用
 

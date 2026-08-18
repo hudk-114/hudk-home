@@ -28,6 +28,7 @@
 - 自动发现默认只接纳带 `intent_router` 标签且命中仓库安全模板的具体实体；配置、诊断和隐藏实体默认排除。Conversation 公开名单只是可选 selector。
 - 输入源分级：本机可信、家庭成员、远程会话、自动化。
 - 每个能力标注 `read`、`routine`、`sensitive` 或 `critical`。
+- OpenClaw 家庭 agent 只放行专用 `hudk_home_turn` 工具；插件固定访问 Router `/v1/turn`，不向该 agent 开放 `exec`、任意 HTTP、HA service 或 `entity_id`。
 
 ## AI 防护
 

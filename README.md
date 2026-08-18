@@ -90,6 +90,7 @@ hudk-home/
 ├── config/                     # 可提交的示例配置，不含密钥
 ├── home-assistant/             # HA packages、中文句式和桥接示例
 ├── intent-router/              # Node.js 意图服务与测试台
+├── openclaw-plugin-hudk-home/  # 只暴露统一家庭文本入口的 OpenClaw 工具插件
 ├── home-assistant-app/         # HA App 清单、配置页和发布说明
 ├── deploy/                     # 非 HAOS 环境的 systemd 兼容样例
 ├── .github/workflows/          # 自动测试、类型检查与构建
