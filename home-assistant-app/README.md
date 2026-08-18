@@ -10,10 +10,10 @@
 4. 推送 `main` 后等待 `Intent Router` workflow 发布两个架构和通用 manifest。
 5. 在 HA App Store 点击“检查更新”，先备份再手动更新。
 
-不要复用已有版本标签承载不同代码。当前版本对应：
+不要复用已有版本标签承载不同代码。HA App 默认使用：
 
 ```text
-ghcr.io/hudk-114/hudk-home-intent-router:<version>
+swr.cn-east-3.myhuaweicloud.com/hudk-home/intent-router:<version>
 ```
 
-首次发布镜像后，将 GHCR 包 `hudk-home-intent-router` 的可见性设置为 Public。之后源码、App 版本和更新入口都在同一仓库维护，不需要同步第二份代码或清单。
+GitHub Actions 仍会同步发布 `ghcr.io/hudk-114/hudk-home-intent-router:<version>` 作为备用源。两个仓库都必须保持公开。之后源码、App 版本和更新入口都在同一仓库维护，不需要同步第二份代码或清单。

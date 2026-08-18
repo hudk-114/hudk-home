@@ -74,7 +74,7 @@ OpenClaw / HA 页面 → Intent Router App:8787 → Supervisor → HA Core
 
 ### 安装 App
 
-公开仓库 `https://github.com/hudk-114/hudk-home` 同时提供源码与 App 清单；镜像由 GitHub Actions 发布到 `ghcr.io/hudk-114/hudk-home-intent-router`。仓库只保存脱敏示例，家庭配置和密钥必须留在 HA App 配置或被忽略的本地文件中。
+公开仓库 `https://github.com/hudk-114/hudk-home` 同时提供源码与 App 清单；App 默认从华为云 SWR 国内公开仓库拉取镜像，GitHub Actions 同时发布 GHCR 备用镜像。仓库只保存脱敏示例，家庭配置和密钥必须留在 HA App 配置或被忽略的本地文件中。
 
 1. 在 HA 打开“设置 → Apps → App store → 右上角菜单 → Repositories”。
 2. 添加 `https://github.com/hudk-114/hudk-home`。
@@ -101,7 +101,7 @@ SWR 发布默认关闭，避免凭证尚未配置时阻断 GHCR 发布。在 Git
 
 再创建 Actions Variable `SWR_ENABLED=true`，从 Actions 页面手动运行 `Intent Router` 工作流。工作流会关闭 SWR 基础版不支持的 OCI provenance 元数据，并强制使用 Docker media types 发布 `amd64`、`aarch64` 两个架构标签；随后按照 SWR 基础版要求显式标注 `amd64`、`arm64` 架构，生成兼容的 Docker manifest list 作为版本号和 `latest` 标签。
 
-SWR 登录指令、AK/SK 和密码不得写入 Git、App 配置或工作流文件。首次发布后在 SWR“我的镜像”中将 `intent-router` 设置为公开，并从未登录客户端验证匿名拉取。只有匿名拉取和双架构检查均通过后，才把 App `config.yaml` 的 `image` 从 GHCR 切换到 SWR 并提升版本号。
+SWR 登录指令、AK/SK 和密码不得写入 Git、App 配置或工作流文件。SWR 中的 `intent-router` 必须保持公开；当前默认镜像已验证可匿名读取，并同时提供 `linux/amd64`、`linux/arm64`。App `config.yaml` 使用 SWR 作为默认源，GHCR 保留为同步发布的备用源。
 
 测试台可从 App Web UI 或 HA 侧边栏打开。它会展示实际发送给 LLM 的脱敏 JSON 请求体；其中不包含 API Key、Supervisor Token、HA service 或实体 ID，只用于联调。
 

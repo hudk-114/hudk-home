@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- 将 Home Assistant App 的默认运行镜像切换到华为云 SWR 国内公开仓库。
+- 保留 GHCR 作为同步发布的备用镜像源。
+- 为 SWR 基础版关闭 OCI 元数据并发布 Docker V2 Schema 2 双架构清单。
+
 ## 0.1.0
 
 - 首次提供 Home Assistant App 打包。

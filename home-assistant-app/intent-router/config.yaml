@@ -1,12 +1,12 @@
 name: HUDK Home Intent Router
-version: "0.1.0"
+version: "0.1.1"
 slug: hudk_intent_router
 description: 受限、可审计的家庭自然语言意图路由器
 url: https://github.com/hudk-114/hudk-home/tree/main/home-assistant-app/intent-router
 arch:
   - amd64
   - aarch64
-image: ghcr.io/hudk-114/hudk-home-intent-router
+image: swr.cn-east-3.myhuaweicloud.com/hudk-home/intent-router
 startup: application
 boot: auto
 init: false
