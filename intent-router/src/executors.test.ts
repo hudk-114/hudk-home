@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { HomeAssistantExecutor } from "./executors.js";
 import type { CapabilityDefinition, NormalizedIntent } from "./types.js";
 
@@ -11,6 +11,10 @@ const intent: NormalizedIntent = {
 };
 
 describe("HomeAssistantExecutor", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("只调用能力目录映射的 HA action 和 entity_id", async () => {
     const mockedFetch = vi.fn<typeof fetch>(async () =>
       new Response(JSON.stringify([{ context: { id: "ctx-1" } }]), {
@@ -142,6 +146,8 @@ describe("HomeAssistantExecutor", () => {
   });
 
   it("last_reported 确实过期时返回时间和过期时长", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-19T13:50:12.419Z"));
     const oldTimestamp = new Date(Date.now() - 60 * 60 * 1_000).toISOString();
     const mockedFetch = vi.fn<typeof fetch>(async () =>
       new Response(

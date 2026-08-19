@@ -100,7 +100,7 @@ export class HomeAssistantExecutor implements CapabilityExecutor {
       capability.max_state_age_seconds !== undefined &&
       ageSeconds > capability.max_state_age_seconds
     ) {
-      const ageMinutes = Math.max(1, Math.ceil(ageSeconds / 60));
+      const ageMinutes = Math.max(1, Math.round(ageSeconds / 60));
       return {
         status: "failed",
         message: `传感器最后上报于 ${freshnessTimestamp}（约 ${ageMinutes} 分钟前），已超过允许的新鲜度，不能当作实时数据返回。请在 Home Assistant 中检查该实体是否仍在更新。`,
