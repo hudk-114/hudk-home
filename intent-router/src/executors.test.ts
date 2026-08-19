@@ -92,4 +92,99 @@ describe("HomeAssistantExecutor", () => {
       temperature: 24,
     });
   });
+
+  it("优先使用 HA last_reported 判断传感器是否仍在上报", async () => {
+    const now = Date.now();
+    const mockedFetch = vi.fn<typeof fetch>(async () =>
+      new Response(
+        JSON.stringify({
+          entity_id: "sensor.bedroom_temperature",
+          state: "24.3",
+          attributes: { unit_of_measurement: "°C" },
+          last_updated: new Date(now - 60 * 60 * 1_000).toISOString(),
+          last_reported: new Date(now - 30 * 1_000).toISOString(),
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const executor = new HomeAssistantExecutor(
+      {
+        base_url: "http://ha.local:8123",
+        token: "test-token",
+        request_timeout_ms: 1_000,
+      },
+      mockedFetch,
+    );
+    const capability: CapabilityDefinition = {
+      target: "bedroom_sensor",
+      kind: "read",
+      risk: "read",
+      ha_entity_id: "sensor.bedroom_temperature",
+      max_state_age_seconds: 900,
+    };
+
+    const result = await executor.execute("sensor.read_temperature", capability, {
+      version: "1.0",
+      intent: "sensor.read",
+      target: "bedroom_sensor",
+      arguments: { metric: "temperature" },
+      confidence: 1,
+    });
+
+    expect(result).toMatchObject({
+      status: "completed",
+      message: "温度当前为 24.3°C。",
+      data: {
+        state: "24.3",
+        last_reported: new Date(now - 30 * 1_000).toISOString(),
+      },
+    });
+  });
+
+  it("last_reported 确实过期时返回时间和过期时长", async () => {
+    const oldTimestamp = new Date(Date.now() - 60 * 60 * 1_000).toISOString();
+    const mockedFetch = vi.fn<typeof fetch>(async () =>
+      new Response(
+        JSON.stringify({
+          entity_id: "sensor.bedroom_temperature",
+          state: "24.3",
+          attributes: { unit_of_measurement: "°C" },
+          last_updated: oldTimestamp,
+          last_reported: oldTimestamp,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const executor = new HomeAssistantExecutor(
+      {
+        base_url: "http://ha.local:8123",
+        token: "test-token",
+        request_timeout_ms: 1_000,
+      },
+      mockedFetch,
+    );
+    const capability: CapabilityDefinition = {
+      target: "bedroom_sensor",
+      kind: "read",
+      risk: "read",
+      ha_entity_id: "sensor.bedroom_temperature",
+      max_state_age_seconds: 900,
+    };
+
+    const result = await executor.execute("sensor.read_temperature", capability, {
+      version: "1.0",
+      intent: "sensor.read",
+      target: "bedroom_sensor",
+      arguments: { metric: "temperature" },
+      confidence: 1,
+    });
+
+    expect(result).toMatchObject({
+      status: "failed",
+      errorCode: "STATE_STALE",
+      data: { last_reported: oldTimestamp },
+    });
+    expect(result.message).toContain(oldTimestamp);
+    expect(result.message).toContain("约 60 分钟前");
+  });
 });

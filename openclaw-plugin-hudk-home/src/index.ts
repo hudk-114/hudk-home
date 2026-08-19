@@ -150,7 +150,7 @@ export default defineToolPlugin({
       name: "hudk_home_turn",
       label: "HUDK 家庭控制",
       description:
-        "当用户要查询或控制家中设备时调用。只传用户的自然语言原文；本工具会由 Intent Router 判断查询、命令、目标和安全策略。",
+        "当用户要查询或控制家中设备时调用。只传用户的自然语言原文；本工具会由 Intent Router 判断查询、命令、目标和安全策略。严格根据返回的 message 回复；失败时不要建议 Router 未声明的刷新、控制或替代操作。",
       parameters: turnParameters as never,
       execute: (params, config, context) =>
         callIntentRouter(

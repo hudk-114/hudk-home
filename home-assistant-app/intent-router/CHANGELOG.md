@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- 传感器新鲜度优先使用 Home Assistant `last_reported`，避免稳定读数因 `last_updated` 未变化而被误判为过期。
+- 数据确实过期时返回最后上报时间和过期时长，便于检查实体或设备状态。
+
 ## 0.1.2
 
 - 允许来自 Supervisor 固定内部地址且已认证的 HA Ingress 请求直接使用测试台。

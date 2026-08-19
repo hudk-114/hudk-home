@@ -14,6 +14,7 @@ interface HaState {
   state: string;
   attributes: Record<string, unknown>;
   last_updated: string;
+  last_reported?: string;
   context?: { id?: string };
 }
 
@@ -85,15 +86,30 @@ export class HomeAssistantExecutor implements CapabilityExecutor {
     const state = await this.request<HaState>(
       `/api/states/${encodeURIComponent(capability.ha_entity_id)}`,
     );
-    const ageSeconds = (Date.now() - Date.parse(state.last_updated)) / 1_000;
+    const freshnessTimestamp = state.last_reported ?? state.last_updated;
+    const freshnessTime = Date.parse(freshnessTimestamp);
+    if (!Number.isFinite(freshnessTime)) {
+      return {
+        status: "failed",
+        message: "Home Assistant 没有返回有效的传感器上报时间，无法确认数据是否仍然新鲜。",
+        errorCode: "STATE_TIMESTAMP_INVALID",
+      };
+    }
+    const ageSeconds = Math.max(0, (Date.now() - freshnessTime) / 1_000);
     if (
       capability.max_state_age_seconds !== undefined &&
       ageSeconds > capability.max_state_age_seconds
     ) {
+      const ageMinutes = Math.max(1, Math.ceil(ageSeconds / 60));
       return {
         status: "failed",
-        message: "传感器数据已超过允许的新鲜度，不能当作实时数据返回。",
+        message: `传感器最后上报于 ${freshnessTimestamp}（约 ${ageMinutes} 分钟前），已超过允许的新鲜度，不能当作实时数据返回。请在 Home Assistant 中检查该实体是否仍在更新。`,
         errorCode: "STATE_STALE",
+        data: {
+          last_reported: state.last_reported ?? null,
+          last_updated: state.last_updated,
+          age_seconds: Math.floor(ageSeconds),
+        },
       };
     }
     const unit = state.attributes.unit_of_measurement;
@@ -105,6 +121,7 @@ export class HomeAssistantExecutor implements CapabilityExecutor {
       data: {
         state: state.state,
         unit: typeof unit === "string" ? unit : null,
+        last_reported: state.last_reported ?? null,
         last_updated: state.last_updated,
       },
       ...(state.context?.id ? { haContextId: state.context.id } : {}),
