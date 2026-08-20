@@ -25,7 +25,7 @@
 
 - Intent Router 使用独立 HA 用户/令牌，便于撤销和审计。
 - 能力目录只允许明确的脚本，不允许任意 `service`、`entity_id` 或模板。
-- 自动发现默认只接纳带 `intent_router` 标签且命中仓库安全模板的具体实体；配置、诊断和隐藏实体默认排除。Conversation 公开名单只是可选 selector。
+- 自动发现默认只接纳带 `intent_router` 标签的具体实体。安全只读域可生成通用 `entity.read`；可写能力仍必须命中受审查模板。隐藏和 `config` 实体始终排除；`diagnostic` 只在实体被明确加标签且配置允许时进入。Conversation 公开名单只是可选 selector。
 - 输入源分级：本机可信、家庭成员、远程会话、自动化。
 - 每个能力标注 `read`、`routine`、`sensitive` 或 `critical`。
 - OpenClaw 家庭 agent 只放行专用 `hudk_home_turn` 工具；插件固定访问 Router `/v1/turn`，不向该 agent 开放 `exec`、任意 HTTP、HA service 或 `entity_id`。

@@ -145,6 +145,55 @@ describe("HomeAssistantExecutor", () => {
     });
   });
 
+  it("通用只读能力返回友好名称、可读布尔值和最后上报时间", async () => {
+    const lastReported = "2026-08-20T01:02:03.000Z";
+    const mockedFetch = vi.fn<typeof fetch>(async () =>
+      new Response(
+        JSON.stringify({
+          entity_id: "binary_sensor.petkit_litter_low",
+          state: "off",
+          attributes: { friendly_name: "小佩智能全自动猫厕所 MAX2 猫砂缺少" },
+          last_changed: "2026-08-19T23:00:00.000Z",
+          last_updated: lastReported,
+          last_reported: lastReported,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const executor = new HomeAssistantExecutor(
+      {
+        base_url: "http://ha.local:8123",
+        token: "test-token",
+        request_timeout_ms: 1_000,
+      },
+      mockedFetch,
+    );
+    const capability: CapabilityDefinition = {
+      target: "petkit_litter_low",
+      kind: "read",
+      risk: "read",
+      ha_entity_id: "binary_sensor.petkit_litter_low",
+    };
+
+    const result = await executor.execute("entity.read", capability, {
+      version: "1.0",
+      intent: "entity.read",
+      target: "petkit_litter_low",
+      arguments: {},
+      confidence: 1,
+    });
+
+    expect(result).toMatchObject({
+      status: "completed",
+      message: `Home Assistant 中记录的「小佩智能全自动猫厕所 MAX2 猫砂缺少」为 否，最后上报于 ${lastReported}。`,
+      data: {
+        state: "off",
+        last_reported: lastReported,
+        last_changed: "2026-08-19T23:00:00.000Z",
+      },
+    });
+  });
+
   it("last_reported 确实过期时返回时间和过期时长", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-19T13:50:12.419Z"));

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.4
+
+- 明确加 `intent_router` 标签的 `sensor`、`binary_sensor`、`event` 在未命中专用模板时自动生成通用 `entity.read`，新增只读实体无需修改 Router。
+- 通用读取按实体区分目标，支持同一宠物设备的猫砂重量、耗材状态、电池、水位和最近事件等多个字段。
+- `diagnostic` 只读实体可在明确加标签时进入，`config` 和可写域继续排除；控制能力仍必须命中受审查模板。
+- 通用读取返回友好名称、当前值和最后上报时间，并继续隐藏真实 HA `entity_id`。
+- 新增人话版设计文档，明确“只读自动、控制受限”的接入边界。
+
 ## 0.1.3
 
 - 传感器新鲜度优先使用 Home Assistant `last_reported`，避免稳定读数因 `last_updated` 未变化而被误判为过期。

@@ -94,6 +94,29 @@ function validateConfig(config: RouterConfig): void {
   if (!config.discovery.selectors.length) {
     throw new RouterError("HA discovery 至少需要一个 selector", "INVALID_CONFIG");
   }
+  const safeFallbackDomains = new Set(["sensor", "binary_sensor", "event"]);
+  if (config.discovery.read_fallback.enabled) {
+    if (!config.discovery.read_fallback.domains.length) {
+      throw new RouterError(
+        "HA discovery read_fallback 至少需要一个只读 domain",
+        "INVALID_CONFIG",
+      );
+    }
+    for (const domain of config.discovery.read_fallback.domains) {
+      if (!safeFallbackDomains.has(domain)) {
+        throw new RouterError(
+          `HA discovery read_fallback 不允许 domain：${domain}`,
+          "INVALID_CONFIG",
+        );
+      }
+    }
+    if (config.discovery.read_fallback.include_entity_categories.includes("config")) {
+      throw new RouterError(
+        "HA discovery read_fallback 不能开放 config 类实体",
+        "INVALID_CONFIG",
+      );
+    }
+  }
   if (!["any", "all"].includes(config.discovery.selection_mode)) {
     throw new RouterError("HA discovery selection_mode 无效", "INVALID_CONFIG");
   }
@@ -256,6 +279,13 @@ export async function loadRouterBundle(
 ): Promise<RouterBundle> {
   const absoluteConfigPath = resolve(configPath);
   const config = await readYaml<RouterConfig>(absoluteConfigPath, env);
+  if (config.discovery) {
+    config.discovery.read_fallback ??= {
+      enabled: true,
+      domains: ["sensor", "binary_sensor", "event"],
+      include_entity_categories: ["diagnostic"],
+    };
+  }
   validateConfig(config);
 
   const projectRoot = resolve(dirname(absoluteConfigPath), config.files.root);

@@ -63,6 +63,13 @@ discovery:
     #   protocol: conversation_exposure
   exclude_entity_categories: [config, diagnostic]
   exclude_hidden: true
+  # 明确加标签的只读实体无需预先编写设备/指标模板。标准模板仍优先；
+  # 未命中模板的这些域会按实体生成 entity.read 能力。diagnostic 只有在
+  # 实体显式带标签时才可进入，便于查询电池等诊断读数；config 始终排除。
+  read_fallback:
+    enabled: true
+    domains: [sensor, binary_sensor, event]
+    include_entity_categories: [diagnostic]
   templates:
     - id: vacuum.start
       intent: vacuum.start

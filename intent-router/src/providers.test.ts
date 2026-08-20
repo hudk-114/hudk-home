@@ -52,6 +52,19 @@ describe("OpenAICompatibleProvider", () => {
         never_allow_generated_entity_id: true,
       },
     } satisfies CapabilityCatalogData);
+    catalog.replaceDiscovered({
+      targets: {
+        petkit_litter: { display_name: "小佩猫砂盆 猫砂重量", aliases: ["猫砂重量"] },
+      },
+      capabilities: {
+        "entity.read@petkit_litter": {
+          target: "petkit_litter",
+          kind: "read",
+          risk: "read",
+          ha_entity_id: "sensor.petkit_litter_weight",
+        },
+      },
+    });
     const provider = new OpenAICompatibleProvider(
       "minimax",
       {
@@ -103,8 +116,8 @@ describe("OpenAICompatibleProvider", () => {
       required: ["version", "intent", "target", "arguments", "confidence"],
       properties: {
         version: { type: "string", enum: ["1.0"] },
-        intent: { enum: ["sensor.read"] },
-        target: { enum: ["bedroom_air"] },
+        intent: { enum: ["sensor.read", "entity.read"] },
+        target: { enum: ["bedroom_air", "petkit_litter"] },
         arguments: { properties: { metric: { enum: ["pm25"] } } },
       },
     });

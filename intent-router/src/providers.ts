@@ -108,7 +108,7 @@ function toolIntentSchema(
     additionalProperties: false,
     properties: argumentProperties,
     description:
-      "sensor.read 必须填写 metric；其他无参数意图填写空对象。设置温度必须填写 temperature_c。",
+      "sensor.read 必须填写 metric；entity.read 和其他无参数意图填写空对象。设置温度必须填写 temperature_c。",
   };
   return {
     type: "object",
@@ -206,7 +206,7 @@ export class OpenAICompatibleProvider implements IntentProvider {
         {
           role: "system",
           content:
-            "你是家庭意图候选生成器。必须调用 resolve_home_intent，并完整填写 version、intent、target、arguments、confidence。只选择 catalog 中成对出现的逻辑能力和逻辑目标，不得生成 Home Assistant service、entity_id、凭证或额外字段。sensor.read 必须填写对应 metric；无参数意图的 arguments 填 {}。不确定或请求范围大于单项能力时，将 confidence 设低并填写 clarification。",
+            "你是家庭意图候选生成器。必须调用 resolve_home_intent，并完整填写 version、intent、target、arguments、confidence。只选择 catalog 中成对出现的逻辑能力和逻辑目标，不得生成 Home Assistant service、entity_id、凭证或额外字段。sensor.read 必须填写对应 metric；entity.read 和其他无参数意图的 arguments 填 {}。不确定或请求范围大于单项能力时，将 confidence 设低并填写 clarification。",
         },
         {
           role: "user",

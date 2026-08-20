@@ -1,4 +1,5 @@
 export type IntentName =
+  | "entity.read"
   | "sensor.read"
   | "vacuum.start"
   | "vacuum.dock"
@@ -139,6 +140,11 @@ export interface DiscoveryConfig {
   selectors: DiscoverySelector[];
   exclude_entity_categories: string[];
   exclude_hidden: boolean;
+  read_fallback: {
+    enabled: boolean;
+    domains: string[];
+    include_entity_categories: string[];
+  };
   templates: DiscoveryTemplate[];
 }
 
