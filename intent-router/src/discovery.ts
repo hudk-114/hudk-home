@@ -163,6 +163,43 @@ function selectorMatches(input: {
   return (input.entity.lb ?? []).some((label) => allowedLabels.has(label));
 }
 
+function explicitlySelectedByLabel(
+  config: DiscoveryConfig,
+  entity: HaEntityRegistryDisplay,
+  exposure: HaExposureResult,
+  labels: HaLabelRegistryEntry[],
+): boolean {
+  return config.selectors
+    .filter((selector) => selector.protocol === "ha_label")
+    .some((selector) => selectorMatches({ selector, entity, exposure, labels }));
+}
+
+function readFallbackMatches(config: DiscoveryConfig, state: HaStateSummary): boolean {
+  return config.read_fallback.enabled &&
+    config.read_fallback.domains.includes(entityDomain(state.entity_id));
+}
+
+function genericReadName(input: {
+  entity: HaEntityRegistryDisplay;
+  state: HaStateSummary;
+  device?: HaDeviceRegistryEntry;
+}): { displayName: string; aliases: string[] } {
+  const friendlyName = textAttribute(input.state.attributes.friendly_name);
+  const registryName = textAttribute(input.entity.en);
+  const deviceName = textAttribute(input.device?.name_by_user) ??
+    textAttribute(input.device?.name);
+  const leafName = registryName ?? friendlyName ?? "Home Assistant 只读实体";
+  const displayName = deviceName && !leafName.includes(deviceName)
+    ? `${deviceName} ${leafName}`
+    : leafName;
+  const aliases = [
+    friendlyName,
+    registryName,
+    deviceName && registryName ? `${deviceName}${registryName}` : null,
+  ].filter((value): value is string => Boolean(value && value !== displayName));
+  return { displayName, aliases: [...new Set(aliases)] };
+}
+
 function mergeAliases(target: TargetDefinition, aliases: Array<string | null>): void {
   const normalized = new Set(target.aliases);
   for (const alias of aliases) {
@@ -248,7 +285,24 @@ export function buildDiscoveredCatalog(input: {
     const category = entity.ec === null || entity.ec === undefined
       ? null
       : categories[String(entity.ec)] ?? null;
-    if (category && input.config.exclude_entity_categories.includes(category)) continue;
+    const fallbackRead = readFallbackMatches(input.config, state);
+    const explicitlyLabeled = explicitlySelectedByLabel(
+      input.config,
+      entity,
+      input.exposure,
+      input.labels,
+    );
+    const categoryAllowedByFallback = Boolean(
+      category &&
+      fallbackRead &&
+      explicitlyLabeled &&
+      input.config.read_fallback.include_entity_categories.includes(category),
+    );
+    if (
+      category &&
+      input.config.exclude_entity_categories.includes(category) &&
+      !categoryAllowedByFallback
+    ) continue;
     const selectorResults = input.config.selectors.map((selector) =>
       selectorMatches({ selector, entity, exposure: input.exposure, labels: input.labels }),
     );
@@ -265,7 +319,8 @@ export function buildDiscoveredCatalog(input: {
         (template.kind === "read" ||
           (template.ha_action !== undefined && availableServices.has(template.ha_action))),
     );
-    if (!matchingTemplates.length) continue;
+    const useReadFallback = matchingTemplates.length === 0 && fallbackRead;
+    if (!matchingTemplates.length && !useReadFallback) continue;
 
     const friendlyName = textAttribute(state.attributes.friendly_name);
     const registryName = textAttribute(entity.en);
@@ -274,7 +329,26 @@ export function buildDiscoveredCatalog(input: {
     const areaEntry = areaId ? areas.get(areaId) : undefined;
     const area = textAttribute(areaEntry?.name) ?? areaId;
     const areaAliases = areaEntry?.aliases ?? [];
-    const opaqueTarget = targetId(entity.di ?? entity.ei);
+    const opaqueTarget = targetId(useReadFallback ? entity.ei : (entity.di ?? entity.ei));
+    if (useReadFallback) {
+      const genericName = genericReadName({
+        entity,
+        state,
+        ...(device ? { device } : {}),
+      });
+      targets[opaqueTarget] = {
+        display_name: genericName.displayName,
+        aliases: genericName.aliases,
+        ...(area ? { area } : {}),
+      };
+      capabilities[`entity.read@${opaqueTarget}`] = {
+        target: opaqueTarget,
+        kind: "read",
+        risk: "read",
+        ha_entity_id: entity.ei,
+      };
+      continue;
+    }
     const preferredName = friendlyName ?? registryName;
     if (preferredName) {
       const names = preferredNames.get(opaqueTarget) ?? new Set<string>();

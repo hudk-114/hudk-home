@@ -75,15 +75,15 @@ App 设置 `homeassistant_api: true`，运行时通过 `SUPERVISOR_TOKEN` 调用
 
 ## HA 自动发现
 
-Router 启动时及每 300 秒读取 HA 的状态、动作、实体注册表、设备注册表、区域注册表、标签和可选的 Conversation 暴露设置，按 selector 与安全模板生成运行时目录。实体未直接分配区域时，会继承其设备所在区域。默认必须同时满足：
+Router 启动时及每 300 秒读取 HA 的状态、动作、实体注册表、设备注册表、区域注册表、标签和可选的 Conversation 暴露设置，按 selector、专用模板和安全只读回退生成运行时目录。实体未直接分配区域时，会继承其设备所在区域。默认必须同时满足：
 
 1. 实体已启用、可用且没有隐藏。
-2. 不是 `config` 或 `diagnostic` 类实体。
+2. 不是 `config` 类实体；`diagnostic` 只有在实体被明确加标签且配置允许只读回退时可进入。
 3. 实体带有 HA 标签 `intent_router`。
-4. 命中 `config/intent-router.example.yaml` 的某个类型模板。
-5. 写模板声明的 HA 动作当前确实存在。
+4. 命中某个专用模板，或属于允许通用读取的 `sensor`、`binary_sensor`、`event`。
+5. 可写模板声明的 HA 动作当前确实存在；只读回退不会生成控制能力。
 
-因此，新增同类型设备时，只需在 HA 中设置清晰的友好名称/区域，并给允许进入通用 Router 的具体实体添加 `intent_router` 标签；随后点“同步 HA”或等待定时同步。Assist 的公开列表只控制 HA 语音助手，不再限制 OpenClaw、网页文字或快捷指令。只有新增一种尚未支持的设备类型或动作时，才需要新增 `discovery.templates` 模板并进行安全评审。
+因此，新增普通只读实体时，只需在 HA 中设置清晰的友好名称/区域，并给允许进入通用 Router 的具体实体添加 `intent_router` 标签；随后点“同步 HA”或等待定时同步。专用模板会优先匹配，未命中模板的安全只读实体按实体生成 `entity.read`，无需为猫砂重量、电池、水位等字段逐个改代码。Assist 的公开列表只控制 HA 语音助手，不再限制 OpenClaw、网页文字或快捷指令。新增控制动作、聚合查询或专用语义时，才需要新增模板并进行安全评审。完整理由见 [设计理念（人话版）](../docs/intent-router-design.md)。
 
 selector 是可组合的：内置 `ha_label` 和 `conversation_exposure`，并支持 `selection_mode: any|all`。默认只启用 HA 标签；需要复用 Assist 公开名单的部署可以显式添加第二个 selector。
 
@@ -153,6 +153,7 @@ HA 侧配置已经独立放在 `home-assistant/packages/hudk_intent_router.yaml`
 
 - `resolution.order`：Resolver 顺序，默认 HA 目录别名 → 本地规则 → 对话上下文 → LLM。
 - `discovery.selectors`：选择通用 Router 的 HA 标签或可选 Assist 暴露来源。
+- `discovery.read_fallback`：允许明确加标签的安全只读域在未命中模板时生成 `entity.read`；默认支持 `sensor`、`binary_sensor`、`event`。
 - `discovery.templates`：按设备域、设备类别、单位或名称定义可自动发现的安全能力模板。
 - `provider.active` 与 `provider.adapters.*.protocol`：切换 AI Provider；内置 `openai_compatible`。
 - `MINIMAX_THINKING=disabled`：M3 在意图分类场景跳过长推理；模型返回仍须通过完整意图 Schema。

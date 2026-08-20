@@ -77,6 +77,10 @@ function actionMatch(text: string): ActionMatch | null {
   return null;
 }
 
+function isGenericReadRequest(text: string): boolean {
+  return /(查|看|读|多少|几|是什么|状态|情况|怎么样|如何|是否|有没有|剩余|不足|缺少|错误|电池|水位|等级|重量|最近事件|记录)/u.test(text);
+}
+
 export class CatalogAliasResolver implements Resolver {
   readonly id = "catalog_aliases";
 
@@ -84,18 +88,28 @@ export class CatalogAliasResolver implements Resolver {
 
   async resolve(request: TurnRequest): Promise<ResolverOutcome | null> {
     const text = normalizeText(request.text);
-    const action = actionMatch(text);
+    let action = actionMatch(text);
+    if (!action && isGenericReadRequest(text)) {
+      action = { capability: "entity.read", intent: "entity.read", arguments: {} };
+    }
     if (!action) return null;
 
     const candidates = this.catalog.targetsForCapability(action.capability);
     if (!candidates.length) return null;
-    const explicit = candidates.filter((id) => {
+    const named = candidates.filter((id) => {
       const target = this.catalog.target(id);
       if (!target) return false;
-      return [target.display_name, ...target.aliases, target.area ?? ""]
+      return [target.display_name, ...target.aliases]
         .map((alias) => normalizeText(alias))
         .some((alias) => alias.length > 0 && text.includes(alias));
     });
+    const areaMatched = named.length === 0
+      ? candidates.filter((id) => {
+          const area = this.catalog.target(id)?.area;
+          return Boolean(area && text.includes(normalizeText(area)));
+        })
+      : [];
+    const explicit = named.length > 0 ? named : areaMatched;
     const selected = explicit.length === 1
       ? explicit[0]
       : explicit.length === 0 && candidates.length === 1

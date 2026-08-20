@@ -13,6 +13,7 @@ interface HaState {
   entity_id: string;
   state: string;
   attributes: Record<string, unknown>;
+  last_changed?: string;
   last_updated: string;
   last_reported?: string;
   context?: { id?: string };
@@ -86,6 +87,13 @@ export class HomeAssistantExecutor implements CapabilityExecutor {
     const state = await this.request<HaState>(
       `/api/states/${encodeURIComponent(capability.ha_entity_id)}`,
     );
+    if (state.state === "unavailable" || state.state === "unknown") {
+      return {
+        status: "failed",
+        message: "Home Assistant 中该实体当前不可用，无法返回可靠读数。",
+        errorCode: "STATE_UNAVAILABLE",
+      };
+    }
     const freshnessTimestamp = state.last_reported ?? state.last_updated;
     const freshnessTime = Date.parse(freshnessTimestamp);
     if (!Number.isFinite(freshnessTime)) {
@@ -114,15 +122,32 @@ export class HomeAssistantExecutor implements CapabilityExecutor {
     }
     const unit = state.attributes.unit_of_measurement;
     const metric = intent.arguments.metric;
-    const displayValue = `${state.state}${typeof unit === "string" ? unit : ""}`;
+    const domain = state.entity_id.split(".", 1)[0];
+    const eventType = typeof state.attributes.event_type === "string"
+      ? state.attributes.event_type
+      : null;
+    const readableState = domain === "binary_sensor"
+      ? state.state === "on" ? "是" : state.state === "off" ? "否" : state.state
+      : domain === "event" && eventType
+        ? `${eventType}（发生于 ${state.state}）`
+        : state.state;
+    const displayValue = `${readableState}${typeof unit === "string" ? unit : ""}`;
+    const isGenericRead = intent.intent === "entity.read";
+    const friendlyName = typeof state.attributes.friendly_name === "string"
+      ? state.attributes.friendly_name
+      : "该实体";
     return {
       status: "completed",
-      message: `${typeof metric === "string" ? (METRIC_NAMES[metric] ?? metric) : "传感器读数"}当前为 ${displayValue}。`,
+      message: isGenericRead
+        ? `Home Assistant 中记录的「${friendlyName}」为 ${displayValue}，最后上报于 ${freshnessTimestamp}。`
+        : `${typeof metric === "string" ? (METRIC_NAMES[metric] ?? metric) : "传感器读数"}当前为 ${displayValue}。`,
       data: {
         state: state.state,
+        ...(eventType ? { event_type: eventType } : {}),
         unit: typeof unit === "string" ? unit : null,
         last_reported: state.last_reported ?? null,
         last_updated: state.last_updated,
+        last_changed: state.last_changed ?? null,
       },
       ...(state.context?.id ? { haContextId: state.context.id } : {}),
     };

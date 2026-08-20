@@ -16,6 +16,11 @@ const config: DiscoveryConfig = {
   selectors: [{ id: "router_label", protocol: "ha_label", labels: ["intent_router"] }],
   exclude_entity_categories: ["config", "diagnostic"],
   exclude_hidden: true,
+  read_fallback: {
+    enabled: true,
+    domains: ["sensor", "binary_sensor", "event"],
+    include_entity_categories: [],
+  },
   templates: [
     {
       id: "vacuum.dock",
@@ -185,6 +190,119 @@ describe("Home Assistant discovery", () => {
     await expect(
       resolver.resolve({ text: "扫地机回充", language: "zh-CN", source: "openclaw" }),
     ).resolves.toMatchObject({ kind: "clarification", errorCode: "TARGET_AMBIGUOUS" });
+  });
+
+  it("给只读实体加标签后无需模板即可发现，并按实体而不是设备区分目标", async () => {
+    const snapshot = buildDiscoveredCatalog({
+      config: {
+        ...config,
+        read_fallback: {
+          enabled: true,
+          domains: ["sensor", "binary_sensor", "event"],
+          include_entity_categories: ["diagnostic"],
+        },
+      },
+      states: [
+        {
+          entity_id: "sensor.petkit_litter_weight",
+          state: "3.2",
+          attributes: { friendly_name: "小佩猫砂盆 猫砂重量", unit_of_measurement: "kg" },
+        },
+        {
+          entity_id: "binary_sensor.petkit_litter_low",
+          state: "off",
+          attributes: { friendly_name: "小佩猫砂盆 猫砂缺少" },
+        },
+        {
+          entity_id: "sensor.petkit_battery",
+          state: "82",
+          attributes: { friendly_name: "猫砂盆智能净味器 电池", unit_of_measurement: "%" },
+        },
+        {
+          entity_id: "switch.petkit_clean",
+          state: "off",
+          attributes: { friendly_name: "小佩猫砂盆 清理" },
+        },
+      ],
+      registry: {
+        entity_categories: { "0": "diagnostic" },
+        entities: [
+          {
+            ei: "sensor.petkit_litter_weight",
+            di: "device-litter-box",
+            en: "猫砂重量",
+            lb: ["intent_router"],
+          },
+          {
+            ei: "binary_sensor.petkit_litter_low",
+            di: "device-litter-box",
+            en: "猫砂缺少",
+            lb: ["intent_router"],
+          },
+          {
+            ei: "sensor.petkit_battery",
+            di: "device-deodorizer",
+            en: "电池",
+            ec: 0,
+            lb: ["intent_router"],
+          },
+          {
+            ei: "switch.petkit_clean",
+            di: "device-litter-box",
+            en: "清理",
+            lb: ["intent_router"],
+          },
+        ],
+      },
+      exposure: { exposed_entities: {} },
+      labels: [{ label_id: "intent_router", name: "intent_router" }],
+      devices: [
+        { id: "device-litter-box", name: "小佩智能全自动猫厕所 MAX2", area_id: "living_room" },
+        { id: "device-deodorizer", name: "猫砂盆-智能净味器", area_id: "living_room" },
+      ],
+      areas: [{ area_id: "living_room", name: "客厅" }],
+      services: [],
+    });
+
+    expect(Object.keys(snapshot.targets)).toHaveLength(3);
+    expect(Object.keys(snapshot.capabilities)).toHaveLength(3);
+    expect(Object.keys(snapshot.capabilities)).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^entity\.read@ha_/),
+      ]),
+    );
+    expect(Object.values(snapshot.targets)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          display_name: "小佩智能全自动猫厕所 MAX2 猫砂重量",
+          area: "客厅",
+        }),
+        expect.objectContaining({
+          display_name: "小佩智能全自动猫厕所 MAX2 猫砂缺少",
+        }),
+        expect.objectContaining({ display_name: "猫砂盆-智能净味器 电池" }),
+      ]),
+    );
+    expect(JSON.stringify(snapshot)).not.toContain("switch.petkit_clean");
+
+    const catalog = new CapabilityCatalog(baseCatalog);
+    catalog.replaceDiscovered(snapshot);
+    const publicCatalog = JSON.stringify(catalog.publicDescription());
+    expect(publicCatalog).toContain("entity.read");
+    expect(publicCatalog).not.toContain("sensor.petkit_litter_weight");
+    expect(publicCatalog).not.toContain("binary_sensor.petkit_litter_low");
+
+    const resolver = new CatalogAliasResolver(catalog);
+    await expect(
+      resolver.resolve({
+        text: "客厅小佩猫砂盆的猫砂重量还有多少",
+        language: "zh-CN",
+        source: "openclaw",
+      }),
+    ).resolves.toMatchObject({
+      kind: "intent",
+      intent: { intent: "entity.read", arguments: {} },
+    });
   });
 
   it("已有 HA 实体时不再向 LLM 公开同类的静态占位能力", () => {

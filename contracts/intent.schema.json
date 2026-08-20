@@ -12,6 +12,7 @@
     "intent": {
       "type": "string",
       "enum": [
+        "entity.read",
         "sensor.read",
         "vacuum.start",
         "vacuum.dock",

@@ -19,6 +19,8 @@ Router 支持从 HA 自动生成同类型设备实例。公开仓库只记录系
 | 扫地机器人 | `vacuum.start`、`vacuum.dock` | Home Assistant | 模板已实现，具体设备本地验收 |
 | 环境传感器 | 温度、湿度、PM2.5、CO₂、TVOC 查询 | Home Assistant | 模板已实现，具体设备本地验收 |
 | 系统健康 | `system.health` | Home Assistant | 能力已实现，具体部署本地验收 |
+| 通用只读实体 | `entity.read` | Home Assistant | 标签即接入；支持 `sensor`、`binary_sensor`、`event` |
+| 宠物设备状态 | 猫砂重量、耗材不足、电池、水位、设备状态、最近事件 | Home Assistant | 使用通用只读能力；真实设备和房间只记本地清单 |
 
 ## 基础设施模板
 

@@ -22,7 +22,7 @@ POST /v1/discovery/sync
 Authorization: Bearer <shared_secret>
 ```
 
-不要给整个集成或所有实体批量打标签。每个可写设备类型仍必须存在受审查的能力模板。
+不要给整个集成或所有实体批量打标签。明确加标签的 `sensor`、`binary_sensor`、`event` 在没有专用模板时会生成通用 `entity.read`，所以新增只读字段无需更新 App。每个可写设备类型仍必须存在受审查的能力模板；标签本身不授予控制权限。
 
 ## OpenClaw
 

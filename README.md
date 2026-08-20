@@ -59,7 +59,7 @@ flowchart TB
 ## 最终架构原则
 
 1. **HA 是唯一执行中枢**：设备状态与命令最终都进入 HA，不让 Siri、OpenClaw 或 AI 直接操作厂商接口。
-2. **能力与设备解耦**：上层调用 `vacuum.dock`，而不是记住某个厂商实体 ID；同类设备实例可从 HA 安全暴露范围自动发现。
+2. **只读自动、控制受限**：带 `intent_router` 标签的安全只读实体可自动生成通用读取能力；控制动作仍必须经过模板或稳定 HA 脚本审查。
 3. **规则优先，AI 兜底**：确定性命令本地匹配；只有模糊表达才请求 MiniMax。
 4. **AI 无任意执行权**：模型只能返回受限意图 JSON，经契约校验、策略检查后映射到 HA 自动发现能力或白名单稳定脚本。
 5. **运行状态不进 Git**：凭证、OAuth、设备注册表、历史数据库、HomeKit 配对和备份都留在 HA。
@@ -68,6 +68,7 @@ flowchart TB
 ## 文档导航
 
 - [总体架构](docs/architecture.md)
+- [Intent Router 设计理念（人话版）](docs/intent-router-design.md)
 - [职责与数据边界](docs/responsibilities.md)
 - [新设备接入规范](docs/device-onboarding.md)
 - [语音与操作控制](docs/voice-and-control.md)
@@ -103,7 +104,7 @@ hudk-home/
 
 1. 先阅读 [新设备接入规范](docs/device-onboarding.md)，不要直接把所有实体暴露给 Apple 或 AI。
 2. 在 HA 中为设备分配区域、友好名称和别名；用 `intent_router` 标签控制通用意图层，用 Assist 公开设置单独控制语音。
-3. 已有类型模板的设备由 Router 自动发现；特殊或高风险动作封装为 HA 脚本，再登记到 `config/capabilities.yaml`。
+3. 安全只读实体会自动发现；专用模板提供更丰富语义。特殊或高风险动作封装为 HA 脚本，再登记到 `config/capabilities.yaml`。
 4. 对照 [部署说明](docs/deployment.md) 将 packages 和自定义句式同步到 HA。
 5. 用 `tests/utterances.yaml` 回归常用表达，再暴露给 Siri 或其他输入源。
 

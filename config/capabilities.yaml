@@ -1,7 +1,8 @@
 version: 1
 
-# 本文件固定核心脚本、特殊策略与人工覆盖；普通同类设备实例由
-# intent-router.example.yaml 的 discovery.templates 从 HA 自动发现。
+# 本文件固定核心脚本、特殊策略与人工覆盖。带 intent_router 标签的
+# sensor/binary_sensor/event 可由 read_fallback 自动生成 entity.read；
+# 专用只读语义和所有可写能力仍由 discovery.templates 或本文件定义。
 
 # Logical targets are stable. Vendor entity IDs remain behind HA scripts.
 targets:
