@@ -3,6 +3,7 @@ export type IntentName =
   | "sensor.read"
   | "vacuum.start"
   | "vacuum.dock"
+  | "pet_feeder.feed_once"
   | "light.turn_on"
   | "light.turn_off"
   | "climate.set_temperature"

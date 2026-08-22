@@ -1,0 +1,54 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "连接霍曼宠物设备",
+        "description": "请输入霍曼 App 账号。密码仅用于本次登录且不会保存；集成保存手机号、区号、随机设备 ID 和云端 token。",
+        "data": {
+          "phone": "手机号",
+          "password": "密码",
+          "area_code": "国际区号"
+        },
+        "data_description": {
+          "phone": "只填手机号，不要重复填写 +86",
+          "password": "填写霍曼 App 的登录密码，不是短信验证码",
+          "area_code": "中国大陆账号保持 +86"
+        }
+      },
+      "reauth_confirm": {
+        "title": "重新登录霍曼",
+        "description": "云端 token 已失效，请重新输入霍曼 App 密码。",
+        "data": {"password": "密码"}
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接霍曼云端",
+      "invalid_auth": "账号或密码错误",
+      "account_not_registered": "霍曼云端认为该手机号未注册；请只填 11 位手机号。若 App 使用验证码、微信或 Apple 登录，请先在 App 中设置登录密码",
+      "login_rejected": "霍曼云端拒绝登录；请检查手机号、App 登录密码和国际区号",
+      "device_discovery_failed": "登录成功，但读取霍曼设备列表失败",
+      "no_devices": "账号中没有发现设备",
+      "vendor_keys_missing": "集成缺少本地 vendor_keys.py"
+    },
+    "abort": {
+      "already_configured": "该霍曼账号已经配置",
+      "reauth_successful": "重新登录成功"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "状态",
+        "state": {"online": "在线", "offline": "离线", "unknown": "未知"}
+      },
+      "last_event": {"name": "最近事件"},
+      "battery": {"name": "备用电池"},
+      "desiccant_remaining": {"name": "干燥剂剩余"}
+    },
+    "binary_sensor": {
+      "low_food": {"name": "缺粮"},
+      "battery_power": {"name": "备用电池供电"}
+    },
+    "button": {"feed_once": {"name": "手动出粮 1 份"}}
+  }
+}

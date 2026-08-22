@@ -39,6 +39,15 @@ rules:
     target: main_vacuum
     confidence: 1
 
+  - id: pet_feeder_feed_once
+    resolver: local_rules
+    patterns:
+      - "^(让)?(霍曼|猫粮机|喂食器)?(手动)?(出粮|出一份粮|喂一次|喂猫)(一下)?$"
+      - "^(给猫|给它)(出|放|喂)(一份|一次)(粮|猫粮)?$"
+    intent: pet_feeder.feed_once
+    target: main_pet_feeder
+    confidence: 1
+
   - id: system_health
     resolver: local_rules
     patterns:

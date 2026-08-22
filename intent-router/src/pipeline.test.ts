@@ -197,6 +197,54 @@ describe("IntentPipeline", () => {
     });
   });
 
+  it("敏感出粮能力只有同一来源确认后才调用 Home Assistant", async () => {
+    const bundle = await loadBundle();
+    bundle.config.discovery.enabled = false;
+    bundle.config.resolution.allow_live_execution = true;
+    bundle.config.home_assistant = {
+      base_url: "http://ha.local:8123",
+      token: "test-token",
+      request_timeout_ms: 1_000,
+    };
+    const calls: string[] = [];
+    const pipeline = await buildPipeline(bundle, {
+      fetch: async (input) => {
+        calls.push(String(input));
+        return new Response("[]", {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    });
+
+    const pending = await pipeline.turn({
+      text: "让霍曼出一份粮",
+      language: "zh-CN",
+      source: "openclaw",
+      actor: "family",
+      dry_run: false,
+    });
+    expect(pending).toMatchObject({
+      status: "needs_confirmation",
+      intent: "pet_feeder.feed_once",
+      target: "main_pet_feeder",
+    });
+    expect(pending.confirmation_id).toEqual(expect.any(String));
+    expect(calls).toHaveLength(0);
+
+    const completed = await pipeline.confirm({
+      confirmation_id: pending.confirmation_id!,
+      source: "openclaw",
+      actor: "family",
+    });
+    expect(completed).toMatchObject({
+      status: "accepted",
+      intent: "pet_feeder.feed_once",
+      data: { capability: "pet_feeder.feed_once", risk: "sensitive" },
+    });
+    expect(calls).toEqual(["http://ha.local:8123/api/services/script/turn_on"]);
+  });
+
   it("只有服务端许可后，请求才能关闭调试并真实调用执行器", async () => {
     const bundle = await loadBundle();
     bundle.config.discovery.enabled = false;

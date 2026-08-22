@@ -1,6 +1,6 @@
 {
   "name": "@hudk-home/intent-router",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "packageManager": "pnpm@10.34.5",
   "type": "module",

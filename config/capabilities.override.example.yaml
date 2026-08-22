@@ -6,6 +6,9 @@ targets:
   main_vacuum:
     area: replace_with_real_area
 
+  main_pet_feeder:
+    area: replace_with_real_area
+
 capabilities:
   vacuum.start:
     verification_entity_id: vacuum.replace_with_real_entity_id

@@ -35,6 +35,22 @@ vacuum.REPLACE_WITH_VACUUM_ENTITY_ID
 
 确认运行正确后，删除 UI 里同名但逻辑重复的旧测试脚本，防止 Siri 选错。
 
+## 部署霍曼 PF20
+
+详细的云端依赖、实体与安全边界见 [霍曼 PF20 接入](homerun-pf20.md)。简要步骤：
+
+1. 将 `home-assistant/custom_components/homerun_pet/` 同步到 HA `/config/custom_components/homerun_pet/`。
+2. 在 HA 运行目录单独放置不进入 Git 的 `vendor_keys.py`，重启 HA。
+3. 在“设置 → 设备与服务 → 添加集成”搜索 `Homerun Pet`，使用霍曼 App 手机号和密码登录。
+4. 在开发者工具中确认状态实体正常，再手工按一次“手动出粮 1 份”按钮验收。
+5. 给允许自然语言读取的状态实体添加 `intent_router` 标签。
+6. 只给名称明确表示“手动出粮 1 份”的按钮添加 `intent_router` 标签，启动或更新 Router 后点击“同步 HA”。不要标记其他控制按钮。
+7. 在测试台确认 `pet_feeder.feed_once` 已自动发现，并在 dry-run 中验证每次都要求确认。
+
+自动发现是首选方式，不需要把厂商按钮 ID 写进 Router。若部署选择稳定 HA 脚本兼容方式，再用真实按钮实体替换本地 `/config/packages/hudk_home.yaml` 中的 `button.REPLACE_WITH_HOMERUN_FEED_ONCE_BUTTON`，检查配置后重载脚本；这个真实 ID 仍不提交。
+
+密码只在配置向导和 token 失效后的重新认证中使用，不保存、不写入 Git；HA 配置条目保存手机号、区号、随机设备 ID 和 token。出粮是敏感写能力，Router 只允许 `home_assistant` 和 `openclaw` 来源，并要求每次确认。
+
 ## 部署中文句式
 
 将 `home-assistant/custom_sentences/zh/hudk_home.yaml` 同步到：

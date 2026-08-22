@@ -280,7 +280,7 @@ export function buildDiscoveredCatalog(input: {
 
   for (const entity of input.registry.entities ?? []) {
     const state = states.get(entity.ei);
-    if (!state || state.state === "unavailable" || state.state === "unknown") continue;
+    if (!state || state.state === "unavailable") continue;
     if (input.config.exclude_hidden && entity.hb === true) continue;
     const category = entity.ec === null || entity.ec === undefined
       ? null
@@ -315,11 +315,13 @@ export function buildDiscoveredCatalog(input: {
 
     const matchingTemplates = input.config.templates.filter(
       (template) =>
+        (state.state !== "unknown" || template.kind === "write") &&
         templateMatches(template, state, entity) &&
         (template.kind === "read" ||
           (template.ha_action !== undefined && availableServices.has(template.ha_action))),
     );
-    const useReadFallback = matchingTemplates.length === 0 && fallbackRead;
+    const useReadFallback =
+      state.state !== "unknown" && matchingTemplates.length === 0 && fallbackRead;
     if (!matchingTemplates.length && !useReadFallback) continue;
 
     const friendlyName = textAttribute(state.attributes.friendly_name);

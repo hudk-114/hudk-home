@@ -55,6 +55,22 @@ const config: DiscoveryConfig = {
       success_criteria: "ha_accepted",
       failure_message: "回充脚本失败",
     },
+    {
+      id: "pet_feeder.feed_once",
+      intent: "pet_feeder.feed_once",
+      match: {
+        domains: ["button"],
+        name_patterns: ["手动.*出.*粮\\s*1\\s*份|feed[_ ]?once"],
+      },
+      kind: "write",
+      risk: "sensitive",
+      allowed_sources: ["home_assistant", "openclaw"],
+      ha_action: "button.press",
+      confirmation: "always",
+      success_criteria: "ha_accepted",
+      accepted_message: "已向猫粮机提交固定 1 份出粮指令。",
+      failure_message: "猫粮机出粮失败",
+    },
   ],
 };
 
@@ -302,6 +318,77 @@ describe("Home Assistant discovery", () => {
     ).resolves.toMatchObject({
       kind: "intent",
       intent: { intent: "entity.read", arguments: {} },
+    });
+  });
+
+  it("只把明确标记的固定一份出粮按钮映射为敏感写能力", async () => {
+    const snapshot = buildDiscoveredCatalog({
+      config,
+      states: [
+        {
+          entity_id: "button.homerun_feed_once",
+          state: "unknown",
+          attributes: { friendly_name: "霍曼喂食器 手动出粮 1 份" },
+        },
+        {
+          entity_id: "button.homerun_reset",
+          state: "unknown",
+          attributes: { friendly_name: "霍曼喂食器 恢复出厂设置" },
+        },
+      ],
+      registry: {
+        entities: [
+          {
+            ei: "button.homerun_feed_once",
+            di: "device-homerun",
+            en: "手动出粮 1 份",
+            lb: ["intent_router"],
+          },
+          {
+            ei: "button.homerun_reset",
+            di: "device-homerun",
+            en: "恢复出厂设置",
+            lb: ["intent_router"],
+          },
+        ],
+      },
+      exposure: { exposed_entities: {} },
+      labels: [{ label_id: "intent_router", name: "intent_router" }],
+      devices: [{ id: "device-homerun", name: "霍曼智能喂食器", area_id: "living_room" }],
+      areas: [{ area_id: "living_room", name: "客厅" }],
+      services: [{ domain: "button", services: ["press"] }],
+    });
+
+    expect(Object.keys(snapshot.targets)).toHaveLength(1);
+    expect(Object.keys(snapshot.capabilities)).toHaveLength(1);
+    expect(Object.values(snapshot.capabilities)).toEqual([
+      expect.objectContaining({
+        kind: "write",
+        risk: "sensitive",
+        ha_action: "button.press",
+        ha_entity_id: "button.homerun_feed_once",
+        confirmation: "always",
+        success_criteria: "ha_accepted",
+      }),
+    ]);
+    expect(JSON.stringify(snapshot)).not.toContain("button.homerun_reset");
+
+    const catalog = new CapabilityCatalog(baseCatalog);
+    catalog.replaceDiscovered(snapshot);
+    const publicCatalog = JSON.stringify(catalog.publicDescription());
+    expect(publicCatalog).toContain("pet_feeder.feed_once");
+    expect(publicCatalog).not.toContain("button.homerun_feed_once");
+
+    const resolver = new CatalogAliasResolver(catalog);
+    await expect(
+      resolver.resolve({
+        text: "让霍曼出一份粮",
+        language: "zh-CN",
+        source: "openclaw",
+      }),
+    ).resolves.toMatchObject({
+      kind: "intent",
+      intent: { intent: "pet_feeder.feed_once", arguments: {} },
     });
   });
 
