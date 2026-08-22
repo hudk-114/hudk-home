@@ -141,6 +141,7 @@ describe("Intent Router HTTP API", () => {
     expect(page.body).toContain("Intent Router 测试台");
     expect(page.body).toContain('href="styles.css"');
     expect(page.body).toContain('src="app.js"');
+    expect(page.body).toContain('id="confirm"');
     expect(page.headers["Content-Security-Policy"]).toContain(
       "frame-ancestors 'self'",
     );

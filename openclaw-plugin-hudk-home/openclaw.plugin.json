@@ -2,7 +2,7 @@
   "id": "hudk-home",
   "name": "HUDK Home",
   "description": "把家庭自然语言请求交给受限的 HUDK Home Intent Router。",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "configSchema": {
     "type": "object",
     "properties": {

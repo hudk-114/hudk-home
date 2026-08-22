@@ -61,4 +61,29 @@ describe("hudk-home", () => {
       callIntentRouter({ text: "开始扫地" }, { sharedSecret: "do-not-leak" }),
     ).rejects.not.toThrow("do-not-leak");
   });
+
+  it("用户确认后用同一受限工具调用 v1/confirm", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ status: "accepted", message: "已提交出粮指令。" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      callIntentRouter(
+        { confirmation_id: "confirm-123" },
+        { baseUrl: "http://192.168.56.2:8787/", sharedSecret: "router-secret" },
+      ),
+    ).resolves.toMatchObject({ status: "accepted" });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("http://192.168.56.2:8787/v1/confirm");
+    expect(JSON.parse(String(init.body))).toEqual({
+      confirmation_id: "confirm-123",
+      source: "openclaw",
+      actor: "family",
+    });
+  });
 });
