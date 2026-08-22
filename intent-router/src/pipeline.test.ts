@@ -228,6 +228,12 @@ describe("IntentPipeline", () => {
       status: "needs_confirmation",
       intent: "pet_feeder.feed_once",
       target: "main_pet_feeder",
+      dry_run: false,
+      data: {
+        capability: "pet_feeder.feed_once",
+        risk: "sensitive",
+        confirmation: "always",
+      },
     });
     expect(pending.confirmation_id).toEqual(expect.any(String));
     expect(calls).toHaveLength(0);

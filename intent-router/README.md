@@ -122,7 +122,7 @@ Content-Type: application/json
 }
 ```
 
-响应中的 `message` 可以原样交还用户；`status` 为 `needs_clarification` 时，把 `message` 当追问并在下一次请求携带上下文。OpenClaw 不应持有 `HA_TOKEN`，也不要给它配置任意 HA service 调用工具。
+响应中的 `message` 可以原样交还用户；`status` 为 `needs_clarification` 时，把 `message` 当追问并在下一次请求携带上下文。`status` 为 `needs_confirmation` 时，必须先询问用户，只有收到明确肯定答复后，才把响应中的短时 `confirmation_id` 交回同一个插件工具；插件会固定调用 `/v1/confirm`，并保持原来的 `source` 与 `actor`。OpenClaw 不应持有 `HA_TOKEN`，也不要给它配置任意 HA service 调用工具。
 
 `llm_request` 仅用于开发调试：如果本轮调用了 LLM，它包含发送给 Provider 的脱敏请求体；确定性 Resolver 命中时为 `null`。调用方不应把该字段朗读给用户或写入普通对话日志。
 

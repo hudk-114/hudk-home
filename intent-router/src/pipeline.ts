@@ -304,7 +304,15 @@ export class IntentPipeline {
           target: intent.target,
           resolver: resolved.resolver,
           confirmation_id: confirmation.id,
+          dry_run: false,
           llm_request: resolved.llm_request ?? null,
+          data: {
+            capability: capability.key,
+            arguments: intent.arguments,
+            kind: capability.definition.kind,
+            risk: capability.definition.risk,
+            confirmation: "always",
+          },
         }),
       );
     }

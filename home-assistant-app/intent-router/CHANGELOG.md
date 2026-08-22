@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6
+
+- 测试台在敏感能力返回 `needs_confirmation` 时显示“确认并执行”，确认后调用受认证的 `/v1/confirm`。
+- 确认页面继续展示逻辑 capability、风险和参数，不暴露 HA service 或实体 ID。
+- OpenClaw 的单一 `hudk_home_turn` 工具支持在用户明确同意后回传短时 `confirmation_id`，不会自动代替用户确认。
+
 ## 0.1.5
 
 - 新增霍曼猫粮机固定“出粮 1 份”能力：仅匹配明确加标签且名称命中安全模板的按钮，不开放通用按钮控制。
