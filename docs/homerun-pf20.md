@@ -46,7 +46,7 @@ PASSWORD_SALT = "..."
 | 安全等级 | `sensitive` |
 | 允许来源 | `home_assistant`、`openclaw` |
 | 参数 | 无；集成内部固定为 1 份 |
-| HA 执行入口 | 首选已加 `intent_router` 标签且名称明确为“手动出粮 1 份”的按钮；稳定脚本作为兼容入口 |
+| HA 执行入口 | 首选已加 `intent_router` 标签且名称明确为“手动出粮 1 份”的按钮；稳定脚本仅在未发现按钮时作为 fallback |
 | Router 确认 | `confirmation: always` |
 | 成功条件 | HA 按钮等待霍曼外层和设备内层都返回成功 |
 | 失败响应 | 不可达、离线、鉴权失败或设备拒绝时返回失败，不重试出粮 |
@@ -63,4 +63,4 @@ PASSWORD_SALT = "..."
 6. 在 Router 测试台点击“同步 HA”，确认目录只出现一个 `pet_feeder.feed_once` 写能力，且风险为 `sensitive`。
 7. 从 OpenClaw 请求出粮，必须先收到确认提示；确认后才执行。
 
-Router 的专用发现模板把这个已标记按钮固定映射为 `button.press`，不接受份数参数，也不会把真实实体 ID 交给 AI。若部署不使用自动发现，可以继续把真实按钮实体只填入 HA 本地 package，并通过 `script.hudk_homerun_feed_once` 提供同一逻辑能力；真实实体 ID 不提交。
+Router 的专用发现模板把这个已标记按钮固定映射为 `button.press`，不接受份数参数，也不会把真实实体 ID 交给 AI。发现成功后，静态 `script.hudk_homerun_feed_once` fallback 会从目录和执行解析中隐藏，不能再被当成第二台设备。若部署不使用自动发现，可以继续把真实按钮实体只填入 HA 本地 package，并通过该脚本提供同一逻辑能力；真实实体 ID 不提交。
