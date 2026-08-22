@@ -67,6 +67,8 @@ capabilities:
     target: main_pet_feeder
     kind: write
     risk: sensitive
+    # 仅作为未发现真实 HA 按钮时的兼容入口；自动发现成功后不再公开或执行。
+    fallback_when_discovered: true
     allowed_sources: [home_assistant, openclaw]
     ha_action: script.turn_on
     ha_entity_id: script.hudk_homerun_feed_once

@@ -21,7 +21,7 @@ Router 支持从 HA 自动生成同类型设备实例。公开仓库只记录系
 | 系统健康 | `system.health` | Home Assistant | 能力已实现，具体部署本地验收 |
 | 通用只读实体 | `entity.read` | Home Assistant | 标签即接入；支持 `sensor`、`binary_sensor`、`event` |
 | 宠物设备状态 | 猫砂重量、耗材不足、电池、水位、设备状态、最近事件 | Home Assistant | 使用通用只读能力；真实设备和房间只记本地清单 |
-| 宠物喂食器 | `pet_feeder.feed_once`（固定 1 份） | HA 标签 + 受审查按钮模板；稳定脚本兼容 | 模板已实现；敏感能力，每次确认，具体设备本地验收 |
+| 宠物喂食器 | `pet_feeder.feed_once`（固定 1 份） | HA 标签 + 受审查按钮模板；稳定脚本仅作 fallback | 模板已实现；发现真实按钮后自动隐藏 fallback；敏感能力，每次确认 |
 
 ## 基础设施模板
 

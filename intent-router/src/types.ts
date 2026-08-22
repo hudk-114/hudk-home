@@ -85,6 +85,8 @@ export interface CapabilityDefinition {
   target: string;
   kind: "read" | "write";
   risk: "read" | "routine" | "sensitive" | "critical";
+  /** Hide this static compatibility mapping while HA discovery provides the same capability. */
+  fallback_when_discovered?: boolean;
   allowed_sources?: string[];
   ha_action?: string;
   ha_entity_id?: string;

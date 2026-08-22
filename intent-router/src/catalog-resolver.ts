@@ -21,7 +21,7 @@ function actionMatch(text: string): ActionMatch | null {
   if (/(扫地|清扫|打扫|干活)/.test(text)) {
     return { capability: "vacuum.start", intent: "vacuum.start", arguments: {} };
   }
-  if (/(出一份粮|出粮|喂一次|喂猫|给猫.*(?:一份|一次))/u.test(text)) {
+  if (/(加餐|出一份粮|出粮|喂一次|喂猫|给(?:猫|它).*(?:一份|一次))/u.test(text)) {
     return {
       capability: "pet_feeder.feed_once",
       intent: "pet_feeder.feed_once",

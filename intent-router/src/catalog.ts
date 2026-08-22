@@ -20,6 +20,23 @@ export class CapabilityCatalog {
     this.discovered = structuredClone(snapshot);
   }
 
+  private discoveredEntries(
+    capabilityId: string,
+  ): [string, CapabilityDefinition][] {
+    return Object.entries(this.discovered.capabilities).filter(([key]) =>
+      key.startsWith(`${capabilityId}@`),
+    );
+  }
+
+  private suppressStatic(
+    capabilityId: string,
+    capability: CapabilityDefinition,
+  ): boolean {
+    return this.discoveredEntries(capabilityId).length > 0 &&
+      (capability.fallback_when_discovered === true ||
+        this.hasPlaceholderMapping(capability));
+  }
+
   capabilityKey(intent: NormalizedIntent): string | null {
     if (intent.intent === "sensor.read") {
       const metric = intent.arguments.metric;
@@ -36,6 +53,7 @@ export class CapabilityCatalog {
     if (!key) return null;
     const staticDefinition = this.data.capabilities[key];
     if (staticDefinition?.target === intent.target) {
+      if (this.suppressStatic(key, staticDefinition)) return null;
       return { key, definition: staticDefinition };
     }
     const discoveredKey = `${key}@${intent.target}`;
@@ -47,13 +65,17 @@ export class CapabilityCatalog {
   }
 
   targetsForCapability(capabilityId: string): string[] {
-    const discoveredTargets = new Set<string>();
-    for (const [key, definition] of Object.entries(this.discovered.capabilities)) {
-      if (key.startsWith(`${capabilityId}@`)) discoveredTargets.add(definition.target);
-    }
-    if (discoveredTargets.size > 0) return [...discoveredTargets];
+    const discoveredTargets = new Set(
+      this.discoveredEntries(capabilityId).map(([, definition]) => definition.target),
+    );
     const staticDefinition = this.data.capabilities[capabilityId];
-    return staticDefinition ? [staticDefinition.target] : [];
+    if (
+      staticDefinition &&
+      !this.suppressStatic(capabilityId, staticDefinition)
+    ) {
+      discoveredTargets.add(staticDefinition.target);
+    }
+    return [...discoveredTargets];
   }
 
   target(id: string): TargetDefinition | undefined {
@@ -67,12 +89,8 @@ export class CapabilityCatalog {
   }
 
   publicDescription(): Record<string, unknown> {
-    const discoveredCapabilityIds = new Set(
-      Object.keys(this.discovered.capabilities).map((key) => key.slice(0, key.indexOf("@"))),
-    );
     const staticCapabilities = Object.entries(this.data.capabilities).filter(
-      ([id, capability]) =>
-        !(discoveredCapabilityIds.has(id) && this.hasPlaceholderMapping(capability)),
+      ([id, capability]) => !this.suppressStatic(id, capability),
     );
     const discoveredCapabilities = Object.entries(this.discovered.capabilities);
     const referencedTargets = new Set([

@@ -439,6 +439,121 @@ describe("Home Assistant discovery", () => {
     });
   });
 
+  it("发现真实 HA 能力后隐藏并禁用静态兼容 fallback", async () => {
+    const catalog = new CapabilityCatalog({
+      ...baseCatalog,
+      targets: {
+        main_pet_feeder: {
+          display_name: "主猫粮机",
+          aliases: ["猫粮机", "霍曼"],
+        },
+      },
+      capabilities: {
+        "pet_feeder.feed_once": {
+          target: "main_pet_feeder",
+          kind: "write",
+          risk: "sensitive",
+          fallback_when_discovered: true,
+          allowed_sources: ["openclaw"],
+          ha_action: "script.turn_on",
+          ha_entity_id: "script.hudk_homerun_feed_once",
+          confirmation: "always",
+          success_criteria: "ha_accepted",
+          failure_message: "出粮失败",
+        },
+      },
+    });
+    catalog.replaceDiscovered({
+      targets: {
+        ha_homerun: {
+          display_name: "霍曼-Real 智能喂食器",
+          aliases: ["霍曼", "喂食器"],
+          area: "客厅",
+        },
+      },
+      capabilities: {
+        "pet_feeder.feed_once@ha_homerun": {
+          target: "ha_homerun",
+          kind: "write",
+          risk: "sensitive",
+          allowed_sources: ["openclaw"],
+          ha_action: "button.press",
+          ha_entity_id: "button.homerun_feed_once",
+          confirmation: "always",
+          success_criteria: "ha_accepted",
+          failure_message: "出粮失败",
+        },
+      },
+    });
+
+    expect(catalog.publicDescription()).toMatchObject({
+      targets: [{ id: "ha_homerun", display_name: "霍曼-Real 智能喂食器" }],
+      capabilities: [{
+        id: "pet_feeder.feed_once",
+        target: "ha_homerun",
+        source: "home_assistant",
+      }],
+    });
+    expect(catalog.targetsForCapability("pet_feeder.feed_once")).toEqual([
+      "ha_homerun",
+    ]);
+    expect(catalog.resolve({
+      version: "1.0",
+      intent: "pet_feeder.feed_once",
+      target: "main_pet_feeder",
+      arguments: {},
+      confidence: 1,
+      needs_confirmation: false,
+      clarification: null,
+    })).toBeNull();
+
+    const resolver = new CatalogAliasResolver(catalog);
+    await expect(resolver.resolve({
+      text: "给猫加餐",
+      language: "zh-CN",
+      source: "openclaw",
+    })).resolves.toMatchObject({
+      kind: "intent",
+      intent: { target: "ha_homerun", intent: "pet_feeder.feed_once" },
+    });
+  });
+
+  it("没有发现真实 HA 能力时继续使用静态兼容 fallback", async () => {
+    const catalog = new CapabilityCatalog({
+      ...baseCatalog,
+      targets: {
+        main_pet_feeder: { display_name: "主猫粮机", aliases: ["猫粮机"] },
+      },
+      capabilities: {
+        "pet_feeder.feed_once": {
+          target: "main_pet_feeder",
+          kind: "write",
+          risk: "sensitive",
+          fallback_when_discovered: true,
+          allowed_sources: ["openclaw"],
+          ha_action: "script.turn_on",
+          ha_entity_id: "script.hudk_homerun_feed_once",
+          confirmation: "always",
+          success_criteria: "ha_accepted",
+          failure_message: "出粮失败",
+        },
+      },
+    });
+
+    expect(catalog.targetsForCapability("pet_feeder.feed_once")).toEqual([
+      "main_pet_feeder",
+    ]);
+    const resolver = new CatalogAliasResolver(catalog);
+    await expect(resolver.resolve({
+      text: "给猫加餐",
+      language: "zh-CN",
+      source: "openclaw",
+    })).resolves.toMatchObject({
+      kind: "intent",
+      intent: { target: "main_pet_feeder", intent: "pet_feeder.feed_once" },
+    });
+  });
+
   it("同步失败时保留最近一次成功目录", async () => {
     let failRest = false;
     const mockedFetch = vi.fn<typeof fetch>(async (input) => {
