@@ -21,6 +21,13 @@ function actionMatch(text: string): ActionMatch | null {
   if (/(扫地|清扫|打扫|干活)/.test(text)) {
     return { capability: "vacuum.start", intent: "vacuum.start", arguments: {} };
   }
+  if (/(出一份粮|出粮|喂一次|喂猫|给猫.*(?:一份|一次))/u.test(text)) {
+    return {
+      capability: "pet_feeder.feed_once",
+      intent: "pet_feeder.feed_once",
+      arguments: {},
+    };
+  }
   if (/(关灯|关闭.*灯|灯.*关掉|熄灯)/.test(text)) {
     return { capability: "light.turn_off", intent: "light.turn_off", arguments: {} };
   }

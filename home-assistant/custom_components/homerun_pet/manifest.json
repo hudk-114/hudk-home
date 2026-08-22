@@ -1,0 +1,11 @@
+{
+  "domain": "homerun_pet",
+  "name": "Homerun Pet",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/hudk-114/hudk-home",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "version": "0.1.0"
+}

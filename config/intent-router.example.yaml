@@ -134,6 +134,23 @@ discovery:
       accepted_message: 已通知扫地机器人返回充电座。
       failure_message: 回充脚本未能启动
 
+    # 可写实体不会因为标签自动获得权限。这里只允许名称明确表示“固定 1 份”
+    # 的喂食按钮；不匹配霍曼的其他按钮，也不接受份数参数。
+    - id: pet_feeder.feed_once
+      intent: pet_feeder.feed_once
+      match:
+        domains: [button]
+        name_patterns: ["手动.*出.*粮\\s*1\\s*份|出.*粮\\s*1\\s*份|feed[_ ]?once"]
+      kind: write
+      risk: sensitive
+      allowed_sources: [home_assistant, openclaw]
+      ha_action: button.press
+      confirmation: always
+      success_criteria: ha_accepted
+      accepted_message: 已向猫粮机提交固定 1 份出粮指令。
+      failure_message: 猫粮机出粮失败
+      timeout_seconds: 30
+
     - id: sensor.read_temperature
       intent: sensor.read
       arguments: { metric: temperature }

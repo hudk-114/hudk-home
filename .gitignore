@@ -34,4 +34,5 @@ coverage/
 # Local generated configuration
 config/*.local.yaml
 home-assistant/**/*.local.yaml
+home-assistant/custom_components/homerun_pet/vendor_keys.py
 docs/*.local.md

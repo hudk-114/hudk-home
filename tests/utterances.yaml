@@ -32,6 +32,11 @@ cases:
     expected_intent: system.health
     expected_target: home
 
+  - text: 让霍曼出一份粮
+    expected_intent: pet_feeder.feed_once
+    expected_target: main_pet_feeder
+    note: 敏感写能力，执行阶段必须二次确认
+
   - text: 让它回去
     expected_status: needs_clarification
     note: 没有上下文时不得猜设备

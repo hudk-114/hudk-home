@@ -20,6 +20,14 @@ targets:
       - 家庭
     area: replace_locally
 
+  main_pet_feeder:
+    display_name: 主猫粮机
+    aliases:
+      - 猫粮机
+      - 喂食器
+      - 霍曼
+    area: replace_locally
+
 capabilities:
   vacuum.start:
     target: main_vacuum
@@ -54,6 +62,19 @@ capabilities:
     timeout_seconds: 20
     accepted_states: [returning]
     completed_states: [docked, charging]
+
+  pet_feeder.feed_once:
+    target: main_pet_feeder
+    kind: write
+    risk: sensitive
+    allowed_sources: [home_assistant, openclaw]
+    ha_action: script.turn_on
+    ha_entity_id: script.hudk_homerun_feed_once
+    confirmation: always
+    success_criteria: ha_accepted
+    accepted_message: 已向 Home Assistant 提交固定 1 份出粮指令。
+    failure_message: 猫粮机出粮失败
+    timeout_seconds: 30
 
   system.health:
     target: home

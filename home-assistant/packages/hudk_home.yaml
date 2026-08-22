@@ -22,6 +22,16 @@ script:
         target:
           entity_id: vacuum.REPLACE_WITH_VACUUM_ENTITY_ID
 
+  hudk_homerun_feed_once:
+    alias: 霍曼猫粮机出粮 1 份
+    description: 稳定能力：主猫粮机只出 1 份；调用失败时脚本同步失败
+    icon: mdi:bowl-mix
+    mode: single
+    sequence:
+      - action: button.press
+        target:
+          entity_id: button.REPLACE_WITH_HOMERUN_FEED_ONCE_BUTTON
+
 intent_script:
   HudkVacuumStart:
     action:
@@ -34,3 +44,9 @@ intent_script:
       - action: script.hudk_vacuum_dock
     speech:
       text: 已让扫地机器人返回充电座
+
+  HudkHomerunFeedOnce:
+    action:
+      - action: script.hudk_homerun_feed_once
+    speech:
+      text: 已向猫粮机提交一份出粮指令
